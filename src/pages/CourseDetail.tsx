@@ -1,40 +1,36 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import { z } from "zod";
-import upiQr from "@/assets/upi-qr.png";
-import { ArrowLeft, IndianRupee, Loader2, CheckCircle2, Clock, Copy, Smartphone, ExternalLink } from "lucide-react";
-
-const utrSchema = z.string().trim().regex(/^[a-zA-Z0-9]{8,30}$/, "Enter a valid UTR / transaction ID");
+import {
+  ArrowLeft,
+  IndianRupee,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
+  ShoppingCart,
+  PlayCircle,
+  BookOpen,
+} from "lucide-react";
 
 export default function CourseDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const qc = useQueryClient();
+  const nav = useNavigate();
 
   const { data: course, isLoading } = useQuery({
     queryKey: ["course", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("courses").select("*").eq("id", id!).maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: settings } = useQuery({
-    queryKey: ["app-settings"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("app_settings").select("upi_id, upi_payee_name").eq("id", 1).maybeSingle();
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("id", id!)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -56,7 +52,13 @@ export default function CourseDetail() {
   });
 
   if (isLoading) {
-    return <AppLayout><div className="container px-4 py-6"><Skeleton className="h-72 w-full" /></div></AppLayout>;
+    return (
+      <AppLayout>
+        <div className="container px-4 py-6">
+          <Skeleton className="h-72 w-full" />
+        </div>
+      </AppLayout>
+    );
   }
   if (!course) {
     return (
@@ -70,8 +72,6 @@ export default function CourseDetail() {
   }
 
   const status = access?.status;
-  const upiId = settings?.upi_id ?? "devpanday19932@axl";
-  const payeeName = settings?.upi_payee_name ?? "Dev Panday";
 
   return (
     <AppLayout>
@@ -80,14 +80,18 @@ export default function CourseDetail() {
           <Link to="/courses"><ArrowLeft className="h-4 w-4 mr-1" /> All courses</Link>
         </Button>
 
-        <Card className="overflow-hidden shadow-card">
-          {course.thumbnail_url && (
+        <Card className="overflow-hidden shadow-card animate-fade-in">
+          {course.thumbnail_url ? (
             <img src={course.thumbnail_url} alt={course.title} className="w-full max-h-72 object-cover" />
+          ) : (
+            <div className="w-full h-48 bg-hero grid place-items-center">
+              <BookOpen className="h-16 w-16 text-primary-foreground/40" />
+            </div>
           )}
           <CardContent className="p-5">
             {course.category && <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">{course.category}</p>}
             <h1 className="font-display text-2xl md:text-3xl font-extrabold mt-1">{course.title}</h1>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
               <span className="inline-flex items-center text-primary font-bold text-lg">
                 <IndianRupee className="h-5 w-5" />{Number(course.price).toLocaleString("en-IN")}
               </span>
@@ -100,21 +104,13 @@ export default function CourseDetail() {
           </CardContent>
         </Card>
 
-        {/* STATE-DEPENDENT SECTION */}
         <div className="mt-5">
           {status === "active" ? (
             <ActiveSection course={course} />
           ) : status === "pending" ? (
             <PendingSection />
           ) : (
-            <PaymentSection
-              courseId={course.id}
-              price={Number(course.price)}
-              title={course.title}
-              upiId={upiId}
-              payeeName={payeeName}
-              onSubmitted={() => qc.invalidateQueries({ queryKey: ["access", id, user?.id] })}
-            />
+            <EnrollSection courseId={course.id} price={Number(course.price)} onEnroll={() => nav(`/courses/${course.id}/checkout`)} />
           )}
         </div>
       </div>
@@ -124,12 +120,38 @@ export default function CourseDetail() {
 
 function PendingSection() {
   return (
-    <Card className="border-warning/40 bg-warning/5">
+    <Card className="border-warning/40 bg-warning/5 animate-fade-in">
       <CardContent className="p-5 text-center">
-        <Clock className="h-10 w-10 mx-auto mb-2 text-warning" />
+        <Clock className="h-10 w-10 mx-auto mb-2 text-warning animate-pulse-glow rounded-full" />
         <h3 className="font-display font-bold text-lg">Awaiting verification</h3>
         <p className="text-sm text-muted-foreground mt-1">
           We received your payment details. You'll get access as soon as Dev Sir confirms your UPI transaction. Usually within a few hours.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function EnrollSection({ courseId, price, onEnroll }: { courseId: string; price: number; onEnroll: () => void }) {
+  return (
+    <Card className="shadow-card animate-fade-in hover-lift">
+      <CardContent className="p-5 md:p-6 text-center">
+        <div className="h-14 w-14 rounded-full bg-cta grid place-items-center mx-auto shadow-cta mb-3">
+          <ShoppingCart className="h-7 w-7 text-white" />
+        </div>
+        <h3 className="font-display font-bold text-xl">Ready to enroll?</h3>
+        <p className="text-sm text-muted-foreground mt-1 mb-4">
+          Pay once via UPI · Lifetime course access · Manual verification
+        </p>
+        <Button
+          size="lg"
+          className="w-full md:w-auto md:px-12 bg-cta hover:opacity-95 shadow-cta border-0 h-12 tap-scale"
+          onClick={onEnroll}
+        >
+          Enroll Now · <IndianRupee className="h-4 w-4 ml-1" />{price.toLocaleString("en-IN")}
+        </Button>
+        <p className="text-[11px] text-muted-foreground mt-3">
+          Apply coupons on the next step.
         </p>
       </CardContent>
     </Card>
@@ -144,12 +166,11 @@ function ActiveSection({ course }: { course: any }) {
       </CardContent></Card>
     );
   }
-  // Prefer playlist embed if both provided we still show video player + playlist link
   const embedSrc = course.youtube_playlist_id
     ? `https://www.youtube.com/embed/videoseries?list=${course.youtube_playlist_id}`
     : `https://www.youtube.com/embed/${course.youtube_video_id}`;
   return (
-    <Card className="overflow-hidden shadow-card">
+    <Card className="overflow-hidden shadow-card animate-fade-in">
       <div className="aspect-video bg-black">
         <iframe
           className="w-full h-full"
@@ -160,12 +181,15 @@ function ActiveSection({ course }: { course: any }) {
         />
       </div>
       <CardContent className="p-4">
-        <h3 className="font-display font-bold">Course Lessons</h3>
+        <h3 className="font-display font-bold inline-flex items-center gap-2">
+          <PlayCircle className="h-5 w-5 text-accent" />
+          Course Lessons
+        </h3>
         <p className="text-xs text-muted-foreground mt-1">
           {course.youtube_playlist_id ? "Full playlist embedded above." : "Video lesson embedded above."}
         </p>
         {course.youtube_playlist_id && (
-          <Button asChild variant="outline" size="sm" className="mt-3">
+          <Button asChild variant="outline" size="sm" className="mt-3 hover-lift">
             <a href={`https://www.youtube.com/playlist?list=${course.youtube_playlist_id}`} target="_blank" rel="noreferrer">
               Open on YouTube <ExternalLink className="h-3 w-3 ml-1" />
             </a>
@@ -173,105 +197,5 @@ function ActiveSection({ course }: { course: any }) {
         )}
       </CardContent>
     </Card>
-  );
-}
-
-function PaymentSection({ courseId, price, title, upiId, payeeName, onSubmitted }: {
-  courseId: string; price: number; title: string; upiId: string; payeeName: string; onSubmitted: () => void;
-}) {
-  const { user } = useAuth();
-  const [utr, setUtr] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${price}&cu=INR&tn=${encodeURIComponent("DSP-" + title.slice(0, 30))}`;
-
-  const copy = (txt: string, label: string) => {
-    navigator.clipboard.writeText(txt);
-    toast.success(`${label} copied`);
-  };
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return toast.error("Please log in first");
-    const v = utrSchema.safeParse(utr);
-    if (!v.success) return toast.error(v.error.issues[0].message);
-    setBusy(true);
-    const { error } = await supabase.from("user_access").insert({
-      user_id: user.id,
-      course_id: courseId,
-      transaction_id: v.data,
-      status: "pending",
-    });
-    setBusy(false);
-    if (error) {
-      if (error.code === "23505") toast.error("You've already submitted for this course.");
-      else toast.error(error.message);
-      return;
-    }
-    toast.success("Submitted! Awaiting verification.");
-    setUtr("");
-    onSubmitted();
-  };
-
-  return (
-    <div className="space-y-4">
-      <Card className="shadow-card">
-        <CardContent className="p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Smartphone className="h-5 w-5 text-accent" />
-            <h3 className="font-display font-bold text-lg">Step 1 — Pay via UPI</h3>
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Scan the QR with any UPI app (PhonePe, GPay, Paytm, BHIM…). Send <span className="font-semibold text-primary">₹{price.toLocaleString("en-IN")}</span> to the UPI ID below.
-          </p>
-
-          <div className="grid sm:grid-cols-2 gap-4 items-center">
-            <div className="bg-white rounded-xl p-3 border-2 border-primary/10 mx-auto">
-              <img src={upiQr} alt="UPI QR for Dev Panday" className="w-44 h-44 object-contain" />
-            </div>
-            <div className="space-y-2.5 text-sm">
-              <div>
-                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">UPI ID</p>
-                <button type="button" onClick={() => copy(upiId, "UPI ID")} className="font-mono font-semibold text-primary inline-flex items-center gap-1.5 hover:underline">
-                  {upiId} <Copy className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <div>
-                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Payee</p>
-                <p className="font-semibold">{payeeName}</p>
-              </div>
-              <div>
-                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Amount</p>
-                <p className="font-bold text-lg text-primary inline-flex items-center"><IndianRupee className="h-5 w-5" />{price.toLocaleString("en-IN")}</p>
-              </div>
-              <Button asChild size="sm" className="bg-cta hover:opacity-95 shadow-cta border-0 w-full">
-                <a href={upiLink}>Open UPI App</a>
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-card">
-        <CardContent className="p-5">
-          <h3 className="font-display font-bold text-lg mb-1">Step 2 — Submit transaction ID</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            After paying, copy the 12-digit UTR / transaction ID from your UPI app and paste it below.
-          </p>
-          <form onSubmit={submit} className="space-y-3">
-            <div>
-              <Label htmlFor="utr">UTR / Transaction ID</Label>
-              <Input id="utr" value={utr} onChange={(e) => setUtr(e.target.value)} placeholder="e.g. 412345678901" required />
-            </div>
-            <Button type="submit" className="w-full" disabled={busy}>
-              {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}I have paid — Submit for verification
-            </Button>
-          </form>
-          <p className="text-[11px] text-muted-foreground mt-3">
-            Dev Sir will verify your payment manually. You'll see the course unlock in “My Learning” once approved.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
   );
 }

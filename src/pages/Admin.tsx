@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,14 +14,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { z } from "zod";
-import { CheckCircle2, ClipboardList, BookOpen, Megaphone, Settings as SettingsIcon, Plus, Trash2, Pencil, Loader2, ImageIcon } from "lucide-react";
+import {
+  CheckCircle2, ClipboardList, BookOpen, Megaphone, Settings as SettingsIcon,
+  Plus, Trash2, Pencil, Loader2, ImageIcon, Upload,
+} from "lucide-react";
 
 const courseSchema = z.object({
-  title: z.string().trim().min(2).max(120),
+  title: z.string().trim().min(2, "Title too short").max(120),
   description: z.string().trim().max(4000).optional().or(z.literal("")),
   price: z.coerce.number().min(0).max(1_000_000),
   category: z.string().trim().max(60).optional().or(z.literal("")),
-  thumbnail_url: z.string().trim().url().or(z.literal("")).optional(),
   youtube_video_id: z.string().trim().max(40).optional().or(z.literal("")),
   youtube_playlist_id: z.string().trim().max(60).optional().or(z.literal("")),
   is_published: z.boolean().default(true),
@@ -66,29 +68,24 @@ function PendingTab() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-pending"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: rows, error } = await supabase
         .from("user_access")
-        .select("id, status, transaction_id, created_at, course:courses(title, price), profile:profiles!user_access_user_id_fkey(full_name, email)")
+        .select("*")
         .eq("status", "pending")
         .order("created_at", { ascending: true });
-      if (error) {
-        // Fallback if FK alias not recognised
-        const r = await supabase.from("user_access").select("*").eq("status", "pending").order("created_at");
-        if (r.error) throw r.error;
-        // hydrate manually
-        const ids = r.data.map((d) => d.user_id);
-        const cids = r.data.map((d) => d.course_id);
-        const [{ data: profiles }, { data: courses }] = await Promise.all([
-          supabase.from("profiles").select("id, full_name, email").in("id", ids),
-          supabase.from("courses").select("id, title, price").in("id", cids),
-        ]);
-        return r.data.map((row) => ({
-          ...row,
-          profile: profiles?.find((p) => p.id === row.user_id) ?? null,
-          course: courses?.find((c) => c.id === row.course_id) ?? null,
-        }));
-      }
-      return data;
+      if (error) throw error;
+      if (!rows?.length) return [];
+      const ids = [...new Set(rows.map((d) => d.user_id))];
+      const cids = [...new Set(rows.map((d) => d.course_id))];
+      const [{ data: profiles }, { data: courses }] = await Promise.all([
+        supabase.from("profiles").select("id, full_name, email").in("id", ids),
+        supabase.from("courses").select("id, title, price").in("id", cids),
+      ]);
+      return rows.map((row) => ({
+        ...row,
+        profile: profiles?.find((p) => p.id === row.user_id) ?? null,
+        course: courses?.find((c) => c.id === row.course_id) ?? null,
+      }));
     },
   });
 
@@ -108,7 +105,7 @@ function PendingTab() {
   return (
     <div className="space-y-3">
       {data.map((row: any) => (
-        <Card key={row.id} className="shadow-card">
+        <Card key={row.id} className="shadow-card hover-lift">
           <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="flex-1 min-w-0">
               <p className="font-semibold truncate">{row.course?.title ?? "Course"}</p>
@@ -121,7 +118,7 @@ function PendingTab() {
                 <span className="text-muted-foreground">{new Date(row.created_at).toLocaleString("en-IN")}</span>
               </div>
             </div>
-            <Button onClick={() => approve(row.id)} className="bg-success hover:bg-success/90 text-success-foreground">
+            <Button onClick={() => approve(row.id)} className="bg-success hover:bg-success/90 text-success-foreground tap-scale">
               <CheckCircle2 className="h-4 w-4 mr-1.5" /> Approve
             </Button>
           </CardContent>
@@ -160,9 +157,16 @@ function CoursesTab() {
         <h3 className="font-display font-bold">All courses ({data?.length ?? 0})</h3>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
           <DialogTrigger asChild>
-            <Button size="sm" onClick={() => setEditing(null)}><Plus className="h-4 w-4 mr-1" /> New</Button>
+            <Button size="sm" onClick={() => setEditing(null)} className="tap-scale"><Plus className="h-4 w-4 mr-1" /> New</Button>
           </DialogTrigger>
-          <CourseDialog course={editing} onClose={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-courses"] }); }} />
+          {/* Key forces remount when switching between edit/new — fixes form not repopulating */}
+          {open && (
+            <CourseDialog
+              key={editing?.id ?? "new"}
+              course={editing}
+              onClose={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-courses"] }); }}
+            />
+          )}
         </Dialog>
       </div>
       {isLoading ? <Skeleton className="h-32" /> : !data?.length ? (
@@ -170,7 +174,7 @@ function CoursesTab() {
       ) : (
         <div className="space-y-2">
           {data.map((c) => (
-            <Card key={c.id} className="shadow-card">
+            <Card key={c.id} className="shadow-card hover-lift">
               <CardContent className="p-3 flex items-center gap-3">
                 <div className="h-14 w-20 rounded-md bg-secondary overflow-hidden shrink-0">
                   {c.thumbnail_url ? <img src={c.thumbnail_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full grid place-items-center text-muted-foreground"><ImageIcon className="h-5 w-5" /></div>}
@@ -191,29 +195,59 @@ function CoursesTab() {
 }
 
 function CourseDialog({ course, onClose }: { course: any | null; onClose: () => void }) {
+  const { user } = useAuth();
   const [form, setForm] = useState({
     title: course?.title ?? "",
     description: course?.description ?? "",
     price: course?.price ?? 0,
     category: course?.category ?? "",
-    thumbnail_url: course?.thumbnail_url ?? "",
     youtube_video_id: course?.youtube_video_id ?? "",
     youtube_playlist_id: course?.youtube_playlist_id ?? "",
     is_published: course?.is_published ?? true,
   });
+  const [thumbFile, setThumbFile] = useState<File | null>(null);
+  const [thumbPreview, setThumbPreview] = useState<string | null>(course?.thumbnail_url ?? null);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!thumbFile) return;
+    const url = URL.createObjectURL(thumbFile);
+    setThumbPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [thumbFile]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const v = courseSchema.safeParse(form);
     if (!v.success) return toast.error(v.error.issues[0].message);
     setBusy(true);
-    const payload: any = { ...v.data };
-    if (!payload.thumbnail_url) payload.thumbnail_url = null;
-    if (!payload.description) payload.description = null;
-    if (!payload.category) payload.category = null;
-    if (!payload.youtube_video_id) payload.youtube_video_id = null;
-    if (!payload.youtube_playlist_id) payload.youtube_playlist_id = null;
+
+    let thumbnail_url: string | null = course?.thumbnail_url ?? null;
+
+    // Upload new thumbnail if file selected
+    if (thumbFile) {
+      const ext = thumbFile.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${user!.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("course-thumbnails")
+        .upload(path, thumbFile, { upsert: false, contentType: thumbFile.type });
+      if (upErr) {
+        setBusy(false);
+        return toast.error("Thumbnail upload failed: " + upErr.message);
+      }
+      thumbnail_url = supabase.storage.from("course-thumbnails").getPublicUrl(path).data.publicUrl;
+    }
+
+    const payload: any = {
+      title: v.data.title,
+      description: v.data.description || null,
+      price: v.data.price,
+      category: v.data.category || null,
+      youtube_video_id: v.data.youtube_video_id || null,
+      youtube_playlist_id: v.data.youtube_playlist_id || null,
+      is_published: v.data.is_published,
+      thumbnail_url,
+    };
 
     const { error } = course
       ? await supabase.from("courses").update(payload).eq("id", course.id)
@@ -231,10 +265,34 @@ function CourseDialog({ course, onClose }: { course: any | null; onClose: () => 
         <div><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></div>
         <div><Label>Category</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="e.g. Class 10 Maths" /></div>
         <div><Label>Description</Label><Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-        <div className="grid grid-cols-2 gap-3">
-          <div><Label>Price (₹)</Label><Input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} required /></div>
-          <div><Label>Thumbnail URL</Label><Input value={form.thumbnail_url} onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })} placeholder="https://…" /></div>
+        <div><Label>Price (₹)</Label><Input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} required /></div>
+
+        <div>
+          <Label>Thumbnail</Label>
+          <div className="flex items-start gap-3 mt-1">
+            <div className="h-20 w-28 rounded-md bg-secondary overflow-hidden shrink-0 border">
+              {thumbPreview ? (
+                <img src={thumbPreview} alt="preview" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full grid place-items-center text-muted-foreground">
+                  <ImageIcon className="h-6 w-6" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setThumbFile(e.target.files?.[0] ?? null)}
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                <Upload className="h-3 w-3 inline mr-0.5" />
+                Upload an image. {course?.thumbnail_url && !thumbFile ? "Leave empty to keep current." : ""}
+              </p>
+            </div>
+          </div>
         </div>
+
         <div><Label>YouTube Video ID</Label><Input value={form.youtube_video_id} onChange={(e) => setForm({ ...form, youtube_video_id: e.target.value })} placeholder="e.g. dQw4w9WgXcQ" /></div>
         <div><Label>YouTube Playlist ID (optional)</Label><Input value={form.youtube_playlist_id} onChange={(e) => setForm({ ...form, youtube_playlist_id: e.target.value })} placeholder="PLxxxx…" />
           <p className="text-[11px] text-muted-foreground mt-1">If a playlist ID is set, the player shows the full playlist instead of a single video.</p>
@@ -244,7 +302,7 @@ function CourseDialog({ course, onClose }: { course: any | null; onClose: () => 
           Published (visible to students)
         </label>
         <DialogFooter>
-          <Button type="submit" disabled={busy}>{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}{course ? "Save" : "Create"}</Button>
+          <Button type="submit" disabled={busy} className="tap-scale">{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}{course ? "Save" : "Create"}</Button>
         </DialogFooter>
       </form>
     </DialogContent>
@@ -309,7 +367,7 @@ function NoticesTab() {
             <div><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} required /></div>
             <div><Label>Body</Label><Textarea rows={4} value={body} onChange={(e) => setBody(e.target.value)} required /></div>
             <div><Label>Image (optional)</Label><Input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>
-            <Button type="submit" disabled={busy} className="bg-cta hover:opacity-95 shadow-cta border-0">
+            <Button type="submit" disabled={busy} className="bg-cta hover:opacity-95 shadow-cta border-0 tap-scale">
               {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Publish
             </Button>
           </form>
@@ -323,7 +381,7 @@ function NoticesTab() {
         ) : (
           <div className="space-y-2">
             {data.map((n) => (
-              <Card key={n.id} className="shadow-card">
+              <Card key={n.id} className="shadow-card hover-lift">
                 <CardContent className="p-4 flex gap-3">
                   {n.image_url && <img src={n.image_url} alt="" className="h-16 w-16 rounded object-cover" />}
                   <div className="flex-1 min-w-0">
@@ -366,31 +424,50 @@ function SettingsTab() {
       upi_payee_name: current.upi_payee_name,
       contact_phone: current.contact_phone || null,
       contact_email: current.contact_email || null,
+      address: current.address || null,
+      map_embed_url: current.map_embed_url || null,
+      youtube_url: current.youtube_url || null,
+      facebook_url: current.facebook_url || null,
+      instagram_url: current.instagram_url || null,
     }).eq("id", 1);
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Settings saved");
     qc.invalidateQueries({ queryKey: ["admin-settings"] });
     qc.invalidateQueries({ queryKey: ["app-settings"] });
+    qc.invalidateQueries({ queryKey: ["app-settings-home"] });
   };
 
   if (isLoading || !current) return <Skeleton className="h-40" />;
 
+  const update = (patch: Partial<typeof current>) => setForm({ ...current, ...patch });
+
   return (
-    <Card className="shadow-card max-w-xl">
+    <Card className="shadow-card max-w-2xl">
       <CardContent className="p-5">
-        <h3 className="font-display font-bold mb-3">Payment & contact settings</h3>
+        <h3 className="font-display font-bold mb-3">Centre settings</h3>
         <form onSubmit={save} className="space-y-3">
-          <div><Label>UPI ID</Label><Input value={current.upi_id} onChange={(e) => setForm({ ...current, upi_id: e.target.value })} required /></div>
-          <div><Label>Payee Name</Label><Input value={current.upi_payee_name} onChange={(e) => setForm({ ...current, upi_payee_name: e.target.value })} required /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Contact Email</Label><Input type="email" value={current.contact_email ?? ""} onChange={(e) => setForm({ ...current, contact_email: e.target.value })} /></div>
-            <div><Label>Contact Phone</Label><Input value={current.contact_phone ?? ""} onChange={(e) => setForm({ ...current, contact_phone: e.target.value })} /></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div><Label>UPI ID</Label><Input value={current.upi_id} onChange={(e) => update({ upi_id: e.target.value })} required /></div>
+            <div><Label>Payee Name</Label><Input value={current.upi_payee_name} onChange={(e) => update({ upi_payee_name: e.target.value })} required /></div>
+            <div><Label>Contact Email</Label><Input type="email" value={current.contact_email ?? ""} onChange={(e) => update({ contact_email: e.target.value })} /></div>
+            <div><Label>Contact Phone</Label><Input value={current.contact_phone ?? ""} onChange={(e) => update({ contact_phone: e.target.value })} /></div>
+          </div>
+          <div><Label>Address</Label><Textarea rows={2} value={current.address ?? ""} onChange={(e) => update({ address: e.target.value })} placeholder="Full centre address shown on Home page" /></div>
+          <div>
+            <Label>Google Maps Embed URL</Label>
+            <Input value={current.map_embed_url ?? ""} onChange={(e) => update({ map_embed_url: e.target.value })} placeholder="https://www.google.com/maps/embed?pb=…" />
+            <p className="text-[11px] text-muted-foreground mt-1">From Google Maps → Share → Embed a map → copy the URL inside src="…".</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div><Label>YouTube URL</Label><Input value={current.youtube_url ?? ""} onChange={(e) => update({ youtube_url: e.target.value })} placeholder="https://youtube.com/@…" /></div>
+            <div><Label>Facebook URL</Label><Input value={current.facebook_url ?? ""} onChange={(e) => update({ facebook_url: e.target.value })} placeholder="https://facebook.com/…" /></div>
+            <div><Label>Instagram URL</Label><Input value={current.instagram_url ?? ""} onChange={(e) => update({ instagram_url: e.target.value })} placeholder="https://instagram.com/…" /></div>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Seeded admin email: <span className="font-mono">{current.admin_seed_email}</span>. The first signup with this email becomes admin automatically.
+            Seeded admin email: <span className="font-mono">{current.admin_seed_email}</span>. Hardcoded admins: <span className="font-mono">yrounsk@gmail.com</span>, <span className="font-mono">devsharma19932@gmail.com</span>, phones <span className="font-mono">+919871868560</span>, <span className="font-mono">+918979073262</span>.
           </p>
-          <Button type="submit" disabled={busy}>{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save</Button>
+          <Button type="submit" disabled={busy} className="tap-scale">{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save</Button>
         </form>
       </CardContent>
     </Card>

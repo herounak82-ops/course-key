@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dev Study Point — PW-inspired design system.
+/* Dev Study Point — design system.
    All colors are HSL.
    Palette: Deep institutional blue, vibrant action orange, soft greys. */
 
@@ -30,7 +30,7 @@
     --muted: 220 18% 94%;
     --muted-foreground: 220 12% 42%;
 
-    /* Vibrant orange CTA — PW signature */
+    /* Vibrant orange CTA */
     --accent: 22 95% 55%;
     --accent-foreground: 0 0% 100%;
 
@@ -49,15 +49,14 @@
 
     --radius: 0.875rem;
 
-    /* Gradients */
     --gradient-hero: linear-gradient(135deg, hsl(222 78% 22%) 0%, hsl(222 80% 38%) 60%, hsl(222 70% 48%) 100%);
     --gradient-cta: linear-gradient(135deg, hsl(22 95% 55%), hsl(14 95% 50%));
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 25% 98%) 100%);
 
-    /* Shadows */
     --shadow-card: 0 4px 16px -4px hsl(222 40% 18% / 0.08);
     --shadow-elevated: 0 12px 32px -12px hsl(222 60% 20% / 0.18);
     --shadow-cta: 0 8px 20px -8px hsl(22 95% 55% / 0.5);
+    --shadow-glow: 0 0 24px -4px hsl(22 95% 55% / 0.45);
 
     --sidebar-background: 222 78% 28%;
     --sidebar-foreground: 0 0% 100%;
@@ -119,5 +118,43 @@
   .shadow-card { box-shadow: var(--shadow-card); }
   .shadow-elevated { box-shadow: var(--shadow-elevated); }
   .shadow-cta { box-shadow: var(--shadow-cta); }
+  .shadow-glow { box-shadow: var(--shadow-glow); }
   .safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+
+  /* Glassmorphism */
+  .glass {
+    background: hsl(0 0% 100% / 0.65);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid hsl(0 0% 100% / 0.4);
+  }
+  .glass-light {
+    background: hsl(0 0% 100% / 0.85);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+  }
+  .glass-dark {
+    background: hsl(222 45% 11% / 0.55);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+  }
+
+  /* Micro-interactions */
+  .hover-lift {
+    @apply transition-all duration-200;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-elevated);
+  }
+  .hover-glow {
+    @apply transition-shadow duration-300;
+  }
+  .hover-glow:hover {
+    box-shadow: var(--shadow-glow);
+  }
+  .tap-scale {
+    @apply transition-transform duration-150 active:scale-95;
+  }
 }
