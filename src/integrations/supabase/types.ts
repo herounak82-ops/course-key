@@ -16,31 +16,76 @@ export type Database = {
     Tables: {
       app_settings: {
         Row: {
+          address: string | null
           admin_seed_email: string
           contact_email: string | null
           contact_phone: string | null
+          facebook_url: string | null
           id: number
+          instagram_url: string | null
+          map_embed_url: string | null
           updated_at: string
           upi_id: string
           upi_payee_name: string
+          youtube_url: string | null
         }
         Insert: {
+          address?: string | null
           admin_seed_email?: string
           contact_email?: string | null
           contact_phone?: string | null
+          facebook_url?: string | null
           id?: number
+          instagram_url?: string | null
+          map_embed_url?: string | null
           updated_at?: string
           upi_id?: string
           upi_payee_name?: string
+          youtube_url?: string | null
         }
         Update: {
+          address?: string | null
           admin_seed_email?: string
           contact_email?: string | null
           contact_phone?: string | null
+          facebook_url?: string | null
           id?: number
+          instagram_url?: string | null
+          map_embed_url?: string | null
           updated_at?: string
           upi_id?: string
           upi_payee_name?: string
+          youtube_url?: string | null
+        }
+        Relationships: []
+      }
+      coupons: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          discount_amount: number | null
+          discount_percent: number | null
+          expires_at: string | null
+          id: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          discount_amount?: number | null
+          discount_percent?: number | null
+          expires_at?: string | null
+          id?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          discount_amount?: number | null
+          discount_percent?: number | null
+          expires_at?: string | null
+          id?: string
         }
         Relationships: []
       }
