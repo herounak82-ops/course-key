@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Home from "./pages/Home";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
+import Checkout from "./pages/Checkout";
 import MyLearning from "./pages/MyLearning";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/" element={<RequireAuth><Home /></RequireAuth>} />
             <Route path="/courses" element={<RequireAuth><Courses /></RequireAuth>} />
             <Route path="/courses/:id" element={<RequireAuth><CourseDetail /></RequireAuth>} />
+            <Route path="/courses/:id/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
             <Route path="/my-learning" element={<RequireAuth><MyLearning /></RequireAuth>} />
             <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
             <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
