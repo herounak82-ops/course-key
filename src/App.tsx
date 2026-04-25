@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RequireAuth, RequireAdmin } from "@/components/RouteGuards";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Home from "./pages/Home";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
@@ -26,6 +27,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/" element={<RequireAuth><Home /></RequireAuth>} />
             <Route path="/courses" element={<RequireAuth><Courses /></RequireAuth>} />
             <Route path="/courses/:id" element={<RequireAuth><CourseDetail /></RequireAuth>} />

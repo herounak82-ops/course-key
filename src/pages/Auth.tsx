@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { z } from "zod";
 import logo from "@/assets/logo.png";
 import { Loader2 } from "lucide-react";
-import { PhoneAuthForm } from "@/components/PhoneAuthForm";
 
 const emailSchema = z.string().trim().email("Invalid email").max(255);
 const passwordSchema = z.string().min(6, "At least 6 characters").max(72);
@@ -22,7 +21,7 @@ export default function Auth() {
   const nav = useNavigate();
   const loc = useLocation();
   const from = (loc.state as { from?: string })?.from || "/";
-  const [tab, setTab] = useState<"login" | "signup" | "phone">("login");
+  const [tab, setTab] = useState<"login" | "signup">("login");
   const [prefilledEmail, setPrefilledEmail] = useState("");
 
   useEffect(() => {
@@ -45,10 +44,9 @@ export default function Auth() {
         <Card className="border-0 shadow-elevated glass-light animate-scale-in">
           <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
             <CardHeader className="pb-2">
-              <TabsList className="grid grid-cols-3 w-full">
+              <TabsList className="grid grid-cols-2 w-full">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                <TabsTrigger value="phone">Phone</TabsTrigger>
               </TabsList>
             </CardHeader>
             <CardContent className="pt-4">
@@ -57,9 +55,6 @@ export default function Auth() {
               </TabsContent>
               <TabsContent value="signup">
                 <SignupForm onExistingEmail={switchToLogin} />
-              </TabsContent>
-              <TabsContent value="phone">
-                <PhoneAuthForm />
               </TabsContent>
             </CardContent>
           </Tabs>
