@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { z } from "zod";
 import logo from "@/assets/logo.png";
 import { Loader2 } from "lucide-react";
-import { PhoneAuthForm } from "@/components/PhoneAuthForm";
 
 const emailSchema = z.string().trim().email("Invalid email").max(255);
 const passwordSchema = z.string().min(6, "At least 6 characters").max(72);
@@ -22,7 +21,7 @@ export default function Auth() {
   const nav = useNavigate();
   const loc = useLocation();
   const from = (loc.state as { from?: string })?.from || "/";
-  const [tab, setTab] = useState<"login" | "signup" | "phone">("login");
+  const [tab, setTab] = useState<"login" | "signup">("login");
   const [prefilledEmail, setPrefilledEmail] = useState("");
 
   useEffect(() => {
@@ -45,10 +44,9 @@ export default function Auth() {
         <Card className="border-0 shadow-elevated glass-light animate-scale-in">
           <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
             <CardHeader className="pb-2">
-              <TabsList className="grid grid-cols-3 w-full">
+              <TabsList className="grid grid-cols-2 w-full">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                <TabsTrigger value="phone">Phone</TabsTrigger>
               </TabsList>
             </CardHeader>
             <CardContent className="pt-4">
@@ -57,9 +55,6 @@ export default function Auth() {
               </TabsContent>
               <TabsContent value="signup">
                 <SignupForm onExistingEmail={switchToLogin} />
-              </TabsContent>
-              <TabsContent value="phone">
-                <PhoneAuthForm />
               </TabsContent>
             </CardContent>
           </Tabs>
@@ -76,6 +71,7 @@ function LoginForm({ prefilledEmail }: { prefilledEmail?: string }) {
   const [email, setEmail] = useState(prefilledEmail ?? "");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     if (prefilledEmail) setEmail(prefilledEmail);
@@ -94,6 +90,18 @@ function LoginForm({ prefilledEmail }: { prefilledEmail?: string }) {
     toast.success("Welcome back!");
   };
 
+  const onForgotPassword = async () => {
+    const ev = emailSchema.safeParse(email);
+    if (!ev.success) return toast.error("Enter your email above first");
+    setResetting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(ev.data, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setResetting(false);
+    if (error) return toast.error(error.message);
+    toast.success("Password reset link sent. Check your email.");
+  };
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
@@ -103,6 +111,14 @@ function LoginForm({ prefilledEmail }: { prefilledEmail?: string }) {
       <div>
         <Label htmlFor="li-pw">Password</Label>
         <Input id="li-pw" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <button
+          type="button"
+          onClick={onForgotPassword}
+          disabled={resetting}
+          className="mt-1 text-xs text-primary hover:underline disabled:opacity-50 inline-flex items-center"
+        >
+          {resetting && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}Forgot password?
+        </button>
       </div>
       <Button type="submit" className="w-full tap-scale" disabled={busy}>
         {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Login
