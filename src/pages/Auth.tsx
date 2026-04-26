@@ -94,8 +94,9 @@ function LoginForm({ prefilledEmail }: { prefilledEmail?: string }) {
     const ev = emailSchema.safeParse(email);
     if (!ev.success) return toast.error("Enter your email above first");
     setResetting(true);
+    const siteUrl = import.meta.env.VITE_PUBLIC_SITE_URL ?? "https://devstudypoint.vercel.app";
     const { error } = await supabase.auth.resetPasswordForEmail(ev.data, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${siteUrl}/reset-password`,
     });
     setResetting(false);
     if (error) return toast.error(error.message);
@@ -142,7 +143,8 @@ function SignupForm({ onExistingEmail }: { onExistingEmail: (email: string) => v
     if (!ev.success) return toast.error(ev.error.issues[0].message);
     if (!pv.success) return toast.error(pv.error.issues[0].message);
     setBusy(true);
-    const redirectUrl = `${window.location.origin}/`;
+    const siteUrl = import.meta.env.VITE_PUBLIC_SITE_URL ?? "https://devstudypoint.vercel.app";
+    const redirectUrl = `${siteUrl}/`;
     const { data, error } = await supabase.auth.signUp({
       email: ev.data,
       password: pv.data,
