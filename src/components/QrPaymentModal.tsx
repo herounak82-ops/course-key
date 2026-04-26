@@ -136,7 +136,7 @@ export function QrPaymentModal({
               Submit for verification
             </Button>
             <p className="text-[10px] text-muted-foreground text-center pt-1">
-              Dev Sir will verify manually. You'll see the unlock in "My Learning".
+              Once verified, your course will appear in "My Learning".
             </p>
           </form>
         </div>

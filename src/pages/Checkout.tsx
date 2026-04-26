@@ -275,7 +275,7 @@ export default function Checkout() {
         <div className="bg-accent/5 border border-accent/20 rounded-xl p-3 mb-5 flex gap-2.5 items-start">
           <Sparkles className="h-4 w-4 text-accent shrink-0 mt-0.5" />
           <p className="text-xs text-foreground/80">
-            After payment, you'll enter your UTR. Access is granted manually by Dev Sir within a few hours.
+            After payment, enter your UTR / Transaction ID below. Your access will be unlocked shortly after verification.
           </p>
         </div>
 
@@ -289,7 +289,7 @@ export default function Checkout() {
         </Button>
 
         <p className="text-center text-[11px] text-muted-foreground mt-4">
-          Secure UPI payment · Manual verification by instructor
+          Secure UPI payment · Verified before unlock
         </p>
       </div>
 
@@ -298,7 +298,13 @@ export default function Checkout() {
         onOpenChange={setSheetOpen}
         upiLink={upiLink}
         amount={finalPrice}
+        courseId={course.id}
         onShowQrFallback={() => setQrOpen(true)}
+        onSubmitted={() => {
+          qc.invalidateQueries({ queryKey: ["access", id, user?.id] });
+          qc.invalidateQueries({ queryKey: ["my-access", user?.id] });
+          nav(`/courses/${id}`);
+        }}
       />
 
       <QrPaymentModal

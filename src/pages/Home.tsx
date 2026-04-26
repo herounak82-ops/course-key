@@ -306,7 +306,7 @@ export default function Home() {
                 <p className="font-display font-extrabold text-lg leading-none">Dev Study Point</p>
                 <p className="text-[11px] uppercase tracking-wider opacity-80 mt-1">by Dev Sharma</p>
                 <p className="text-xs opacity-80 mt-2 max-w-xs">
-                  Trusted coaching for K-12 and competitive exams. Manual UPI verification, lifetime course access.
+                  Trusted coaching for K-12 and competitive exams. Pay once via UPI and learn at your own pace.
                 </p>
               </div>
             </div>
