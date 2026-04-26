@@ -141,7 +141,7 @@ function EnrollSection({ courseId, price, onEnroll }: { courseId: string; price:
         </div>
         <h3 className="font-display font-bold text-xl">Ready to enroll?</h3>
         <p className="text-sm text-muted-foreground mt-1 mb-4">
-          Pay once via UPI · Lifetime course access · Manual verification
+          Pay once via UPI · Full course access · Secure checkout
         </p>
         <Button
           size="lg"
