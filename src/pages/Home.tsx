@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 import teacherStudents from "@/assets/teacher-students.jpg";
 import teacherBoard from "@/assets/teacher-board.jpg";
 import teacherPortrait from "@/assets/teacher-portrait.jpg";
-import teacherClassroom from "@/assets/teacher-classroom.jpg";
+
 import logo from "@/assets/logo.png";
 import {
   ArrowRight,
