@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 import teacherStudents from "@/assets/teacher-students.jpg";
 import teacherBoard from "@/assets/teacher-board.jpg";
 import teacherPortrait from "@/assets/teacher-portrait.jpg";
-import teacherClassroom from "@/assets/teacher-classroom.jpg";
+
 import logo from "@/assets/logo.png";
 import {
   ArrowRight,
@@ -83,7 +83,7 @@ export default function Home() {
               Learn smarter with <span className="text-accent">Dev Sharma</span>
             </h1>
             <p className="mt-3 md:text-lg opacity-90 max-w-xl">
-              K-12, BCom/BSc/BA, banking & competitive exam prep — taught with the clarity that comes from a decade in the classroom.
+              Mathematics, mathematical reasoning & competitive exam prep (Banking, Railway and more) — taught with the clarity that comes from a decade in the classroom.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Button asChild size="lg" className="bg-cta hover:opacity-95 shadow-cta border-0 tap-scale">
@@ -113,7 +113,7 @@ export default function Home() {
           {[
             { label: "Years teaching", value: "10+", icon: Award },
             { label: "Students taught", value: "1000+", icon: Users },
-            { label: "Subjects", value: "20+", icon: BookOpen },
+            { label: "Success stories", value: "100+", icon: BookOpen },
           ].map((s) => (
             <Card key={s.label} className="shadow-card border-0 bg-card hover-lift">
               <CardContent className="p-3 md:p-4 text-center">
@@ -209,20 +209,20 @@ export default function Home() {
         </div>
         <Card className="shadow-card overflow-hidden">
           <div className="grid md:grid-cols-2 gap-0">
-            <div className="grid grid-cols-2 gap-1.5 p-1.5">
-              <img src={teacherClassroom} alt="Inside the classroom" className="rounded-lg w-full h-32 md:h-44 object-cover hover-lift" />
-              <img src={teacherStudents} alt="Students learning" className="rounded-lg w-full h-32 md:h-44 object-cover hover-lift" />
-              <img src={teacherBoard} alt="Whiteboard teaching" className="rounded-lg w-full h-32 md:h-44 object-cover col-span-2 hover-lift" />
+            <div className="grid grid-cols-1 gap-1.5 p-1.5">
+              <img src={teacherStudents} alt="Students learning" className="rounded-lg w-full h-40 md:h-44 object-cover hover-lift" />
+              <img src={teacherBoard} alt="Whiteboard classes" className="rounded-lg w-full h-40 md:h-44 object-cover hover-lift" />
             </div>
             <CardContent className="p-5 md:p-6 flex flex-col justify-center">
               <h3 className="font-display text-xl font-bold text-primary mb-2">
                 A decade of dedicated teaching
               </h3>
               <p className="text-sm md:text-base text-foreground/80 leading-relaxed">
-                <strong>Dev Study Point</strong>, founded by <strong>Dayaram "Dev" Sharma</strong>,
-                has helped over 1,000 students master Mathematics, Commerce, and competitive
-                exam preparation. Our centre combines old-school discipline with modern,
-                concept-first teaching — every doubt addressed, every student supported.
+              <strong>Dev Study Point</strong>, founded by <strong>Dayaram "Dev" Sharma</strong>,
+                has helped over 1,000 students master Mathematics, mathematical reasoning,
+                and competitive exam preparation including Banking and Railway. Our centre
+                combines old-school discipline with modern, concept-first teaching — every
+                doubt addressed, every student supported.
               </p>
               <div className="grid grid-cols-2 gap-3 mt-4">
                 <div className="flex items-center gap-2 text-sm">
@@ -306,7 +306,7 @@ export default function Home() {
                 <p className="font-display font-extrabold text-lg leading-none">Dev Study Point</p>
                 <p className="text-[11px] uppercase tracking-wider opacity-80 mt-1">by Dev Sharma</p>
                 <p className="text-xs opacity-80 mt-2 max-w-xs">
-                  Trusted coaching for K-12 and competitive exams. Pay once via UPI and learn at your own pace.
+                  Learn at your own pace with Dev Sir — become our next success story.
                 </p>
               </div>
             </div>
