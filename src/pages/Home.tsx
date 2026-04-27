@@ -19,7 +19,6 @@ import {
   Sparkles,
   Youtube,
   Facebook,
-  Instagram,
   MapPin,
   Phone,
   Mail,
@@ -57,8 +56,7 @@ export default function Home() {
   });
 
   const youtubeUrl = settings?.youtube_url || "https://www.youtube.com/@devstudypoint1993";
-  const facebookUrl = settings?.facebook_url || "https://www.facebook.com/devstudypoint";
-  const instagramUrl = settings?.instagram_url || "https://www.instagram.com/devstudypoint";
+  const facebookUrl = settings?.facebook_url || "https://www.facebook.com/share/18YP2FWvvG/";
   const address = settings?.address ||
     "Dev Study Point Coaching Centre,\nNear Main Market, India";
   const mapEmbed =
@@ -340,15 +338,6 @@ export default function Home() {
                   aria-label="Facebook"
                 >
                   <Facebook className="h-5 w-5" />
-                </a>
-                <a
-                  href={instagramUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="h-10 w-10 grid place-items-center rounded-full bg-white/10 hover:bg-white/20 transition-colors hover-lift"
-                  aria-label="Instagram"
-                >
-                  <Instagram className="h-5 w-5" />
                 </a>
               </div>
               {contactPhone && (
