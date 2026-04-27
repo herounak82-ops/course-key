@@ -21,6 +21,7 @@ import {
   Facebook,
   MapPin,
   Phone,
+  MessageCircle,
   Mail,
   Award,
   Users,
@@ -59,11 +60,10 @@ export default function Home() {
   const facebookUrl = settings?.facebook_url || "https://www.facebook.com/share/18YP2FWvvG/";
   const address = settings?.address ||
     "Dev Study Point Coaching Centre,\nNear Main Market, India";
-  const mapEmbed =
-    settings?.map_embed_url ||
-    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d56026.59!2d77.20653!3d28.6139!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd5b347eb62d%3A0x52c2b7494e204dce!2sIndia!5e0!3m2!1sen!2sin!4v1700000000";
   const contactPhone = settings?.contact_phone;
   const contactEmail = settings?.contact_email;
+  const phoneDigits = (contactPhone || "").replace(/\D/g, "");
+  const waNumber = phoneDigits ? (phoneDigits.length === 10 ? `91${phoneDigits}` : phoneDigits) : "";
 
   return (
     <AppLayout>
@@ -245,52 +245,49 @@ export default function Home() {
         </Card>
       </section>
 
-      {/* FIND US — MAP */}
+      {/* GET IN TOUCH */}
       <section className="container px-4 py-8">
         <div className="flex items-center gap-2 mb-4">
           <MapPin className="h-5 w-5 text-accent" />
-          <h2 className="font-display text-xl md:text-2xl font-bold">Find Us</h2>
+          <h2 className="font-display text-xl md:text-2xl font-bold">Get in touch</h2>
         </div>
-        <Card className="shadow-card overflow-hidden">
-          <div className="grid md:grid-cols-2 gap-0">
-            <div className="aspect-video md:aspect-auto md:h-full bg-muted">
-              <iframe
-                src={mapEmbed}
-                title="Dev Study Point location"
-                className="w-full h-full min-h-[240px] border-0"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                allowFullScreen
-              />
+        <Card className="shadow-card">
+          <CardContent className="p-5 space-y-4">
+            <div>
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Address</p>
+              <p className="text-sm whitespace-pre-line mt-1">{address}</p>
             </div>
-            <CardContent className="p-5 space-y-3">
-              <div>
-                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Address</p>
-                <p className="text-sm whitespace-pre-line mt-1">{address}</p>
+            {contactEmail && (
+              <div className="flex items-center gap-2 text-sm">
+                <Mail className="h-4 w-4 text-accent" />
+                <a href={`mailto:${contactEmail}`} className="font-medium hover:underline break-all">{contactEmail}</a>
               </div>
-              {contactPhone && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Phone className="h-4 w-4 text-accent" />
-                  <a href={`tel:${contactPhone}`} className="font-medium hover:underline">{contactPhone}</a>
-                </div>
-              )}
-              {contactEmail && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Mail className="h-4 w-4 text-accent" />
-                  <a href={`mailto:${contactEmail}`} className="font-medium hover:underline break-all">{contactEmail}</a>
-                </div>
-              )}
-              <Button asChild variant="outline" size="sm" className="hover-lift">
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open in Google Maps
-                </a>
-              </Button>
-            </CardContent>
-          </div>
+            )}
+            {contactPhone && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button asChild className="bg-cta hover:opacity-95 shadow-cta border-0 tap-scale">
+                  <a href={`tel:${contactPhone}`} aria-label="Call us">
+                    <Phone className="h-4 w-4 mr-2" /> Call now
+                  </a>
+                </Button>
+                {waNumber && (
+                  <Button
+                    asChild
+                    className="bg-[hsl(142,70%,40%)] hover:bg-[hsl(142,70%,35%)] text-white border-0 tap-scale"
+                  >
+                    <a
+                      href={`https://wa.me/${waNumber}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label="Chat on WhatsApp"
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" /> WhatsApp
+                    </a>
+                  </Button>
+                )}
+              </div>
+            )}
+          </CardContent>
         </Card>
       </section>
 
