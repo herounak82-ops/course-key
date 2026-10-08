@@ -16,7 +16,7 @@ export const BottomNav = () => {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur safe-bottom md:hidden">
-      <ul className="grid grid-cols-5 max-w-screen-sm mx-auto">
+      <ul className={cn("grid max-w-screen-sm mx-auto", nav.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
         {nav.map(({ to, label, icon: Icon }) => (
           <li key={to}>
             <NavLink
