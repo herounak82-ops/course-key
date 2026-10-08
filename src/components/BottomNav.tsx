@@ -24,12 +24,12 @@ export const BottomNav = () => {
               end={to === "/"}
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-colors min-h-[52px]",
+                  "flex flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition-colors min-h-[52px]",
                   isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )
               }
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-6 w-6" strokeWidth={2.2} />
               <span>{label}</span>
             </NavLink>
           </li>
