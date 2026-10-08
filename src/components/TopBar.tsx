@@ -2,7 +2,7 @@ import { Link, NavLink } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Shield } from "lucide-react";
+import { Shield, LogIn } from "lucide-react";
 import { HamburgerDrawer } from "./HamburgerDrawer";
 
 const links = [
@@ -13,7 +13,7 @@ const links = [
 ];
 
 export const TopBar = () => {
-  const { role } = useAuth();
+  const { role, user, loading } = useAuth();
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-white shadow-sm">
       <div className="container flex items-center justify-between gap-2 h-16 md:h-20 px-3 md:px-4">
@@ -63,6 +63,13 @@ export const TopBar = () => {
             </Button>
           )}
         </nav>
+        {!loading && !user && (
+          <Button asChild size="sm" className="shadow-card tap-scale md:ml-2">
+            <Link to="/auth">
+              <LogIn className="h-4 w-4 mr-1" /> Login
+            </Link>
+          </Button>
+        )}
       </div>
     </header>
   );

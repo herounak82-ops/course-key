@@ -1,4 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { addRecent } from "@/lib/recentlyViewed";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -50,6 +52,12 @@ export default function CourseDetail() {
       return data;
     },
   });
+
+  useEffect(() => {
+    if (course && access?.status === "active") {
+      addRecent({ id: course.id, title: course.title, thumbnail_url: course.thumbnail_url ?? null });
+    }
+  }, [course, access?.status]);
 
   if (isLoading) {
     return (

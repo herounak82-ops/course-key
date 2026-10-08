@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, PlayCircle, Clock, IndianRupee } from "lucide-react";
+import { GraduationCap, PlayCircle, Clock, IndianRupee, History } from "lucide-react";
+import { getRecent } from "@/lib/recentlyViewed";
 import { Badge } from "@/components/ui/badge";
 
 export default function MyLearning() {
@@ -27,6 +28,8 @@ export default function MyLearning() {
 
   const active = data?.filter((d) => d.status === "active") ?? [];
   const pending = data?.filter((d) => d.status === "pending") ?? [];
+  const activeIds = new Set(active.map((a: any) => a.course?.id));
+  const recent = getRecent().filter((r) => !data || activeIds.has(r.id));
 
   return (
     <AppLayout>
@@ -35,13 +38,40 @@ export default function MyLearning() {
           <h1 className="font-display text-2xl md:text-3xl font-extrabold flex items-center gap-2">
             <GraduationCap className="h-7 w-7" /> My Learning
           </h1>
-          <p className="opacity-85 text-sm mt-1">Your enrolled and pending courses.</p>
+          <p className="opacity-85 text-sm mt-1">Your courses and recently watched videos.</p>
         </div>
       </section>
 
       <section className="container px-4 py-6 space-y-8">
+        {recent.length > 0 && (
+          <div>
+            <h2 className="font-display font-bold text-lg mb-3 flex items-center gap-2">
+              <History className="h-5 w-5" /> Recently viewed
+            </h2>
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x">
+              {recent.map((r) => (
+                <Link key={r.id} to={`/courses/${r.id}`} className="snap-start shrink-0 w-56 group">
+                  <Card className="overflow-hidden shadow-card group-hover:shadow-elevated transition-all">
+                    <div className="aspect-video bg-secondary">
+                      {r.thumbnail_url ? (
+                        <img src={r.thumbnail_url} alt={r.title} className="w-full h-full object-cover" />
+                      ) : <div className="w-full h-full bg-hero" />}
+                    </div>
+                    <CardContent className="p-3">
+                      <h3 className="font-semibold text-sm line-clamp-2">{r.title}</h3>
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Viewed {new Date(r.viewedAt).toLocaleDateString("en-IN")}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div>
-          <h2 className="font-display font-bold text-lg mb-3">Enrolled</h2>
+          <h2 className="font-display font-bold text-lg mb-3">My courses</h2>
           {isLoading ? (
             <Skeleton className="h-32 w-full" />
           ) : active.length === 0 ? (
