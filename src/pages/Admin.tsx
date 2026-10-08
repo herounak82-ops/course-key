@@ -13,10 +13,11 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { LearningTab } from "@/components/admin/LearningTab";
 import { z } from "zod";
 import {
   CheckCircle2, ClipboardList, BookOpen, Megaphone, Settings as SettingsIcon,
-  Plus, Trash2, Pencil, Loader2, ImageIcon, Upload,
+  GraduationCap, Plus, Trash2, Pencil, Loader2, ImageIcon, Upload,
 } from "lucide-react";
 
 const courseSchema = z.object({
@@ -45,14 +46,16 @@ export default function Admin() {
 
       <section className="container px-4 py-6">
         <Tabs defaultValue="pending">
-          <TabsList className="w-full grid grid-cols-4 h-auto">
+          <TabsList className="w-full grid grid-cols-5 h-auto">
             <TabsTrigger value="pending" className="py-2.5"><ClipboardList className="h-4 w-4 mr-1.5 hidden sm:inline" />Pending</TabsTrigger>
             <TabsTrigger value="courses" className="py-2.5"><BookOpen className="h-4 w-4 mr-1.5 hidden sm:inline" />Courses</TabsTrigger>
+            <TabsTrigger value="learning" className="py-2.5"><GraduationCap className="h-4 w-4 mr-1.5 hidden sm:inline" />Learning</TabsTrigger>
             <TabsTrigger value="notices" className="py-2.5"><Megaphone className="h-4 w-4 mr-1.5 hidden sm:inline" />Notices</TabsTrigger>
             <TabsTrigger value="settings" className="py-2.5"><SettingsIcon className="h-4 w-4 mr-1.5 hidden sm:inline" />Settings</TabsTrigger>
           </TabsList>
           <TabsContent value="pending" className="mt-5"><PendingTab /></TabsContent>
           <TabsContent value="courses" className="mt-5"><CoursesTab /></TabsContent>
+          <TabsContent value="learning" className="mt-5"><LearningTab /></TabsContent>
           <TabsContent value="notices" className="mt-5"><NoticesTab /></TabsContent>
           <TabsContent value="settings" className="mt-5"><SettingsTab /></TabsContent>
         </Tabs>

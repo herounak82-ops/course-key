@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { GraduationCap, PlayCircle, Clock, IndianRupee, History } from "lucide-react";
 import { getRecent } from "@/lib/recentlyViewed";
 import { Badge } from "@/components/ui/badge";
+import { FreeLearning } from "@/components/FreeLearning";
+import { YouTubeLatest } from "@/components/YouTubeLatest";
 
 export default function MyLearning() {
   const { user } = useAuth();
@@ -38,7 +40,7 @@ export default function MyLearning() {
           <h1 className="font-display text-2xl md:text-3xl font-extrabold flex items-center gap-2">
             <GraduationCap className="h-7 w-7" /> My Learning
           </h1>
-          <p className="opacity-85 text-sm mt-1">Your courses and recently watched videos.</p>
+          <p className="opacity-85 text-sm mt-1">Free study material, video series and your courses.</p>
         </div>
       </section>
 
@@ -105,6 +107,13 @@ export default function MyLearning() {
             </div>
           )}
         </div>
+
+        <div>
+          <h2 className="font-display font-extrabold text-xl mb-3">Free learning</h2>
+          <FreeLearning />
+        </div>
+
+        <div className="-mx-4"><YouTubeLatest limit={6} /></div>
 
         {pending.length > 0 && (
           <div>
