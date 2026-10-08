@@ -131,6 +131,42 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_items: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_published: boolean
+          kind: string
+          ref: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          kind?: string
+          ref: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          kind?: string
+          ref?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: []
+      }
       notices: {
         Row: {
           body: string
