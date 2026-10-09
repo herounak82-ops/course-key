@@ -15,6 +15,13 @@
       "when": 1791562693486,
       "tag": "0001_learning_tree",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791562709996,
+      "tag": "0002_study_files_policies",
+      "breakpoints": true
     }
   ]
 }

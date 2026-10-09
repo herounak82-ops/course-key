@@ -1,0 +1,4 @@
+CREATE POLICY "study files read" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'study-files');
+CREATE POLICY "study files admin insert" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'study-files' AND public.has_role(auth.uid(), 'admin'::public.app_role));
+CREATE POLICY "study files admin update" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'study-files' AND public.has_role(auth.uid(), 'admin'::public.app_role));
+CREATE POLICY "study files admin delete" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'study-files' AND public.has_role(auth.uid(), 'admin'::public.app_role));
