@@ -1,10 +1,17 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export const KINDS = [
+  { value: "folder", label: "Folder" },
+  { value: "upload", label: "Uploaded file" },
   { value: "drive_folder", label: "Drive folder (auto-lists files)" },
   { value: "drive_file", label: "Drive file / link" },
   { value: "yt_playlist", label: "YouTube playlist / series" },
   { value: "yt_video", label: "YouTube video (incl. unlisted)" },
   { value: "link", label: "Other link" },
 ] as const;
+
+/** Kinds the admin can add via the "Add link" dialog. */
+export const LINK_KINDS = KINDS.filter((k) => k.value !== "folder" && k.value !== "upload");
 
 export type Kind = (typeof KINDS)[number]["value"];
 
@@ -25,3 +32,22 @@ export function normaliseRef(kind: string, input: string): string {
 export const driveFileUrl = (ref: string) =>
   /^https?:/.test(ref) ? ref : `https://drive.google.com/file/d/${ref}/view`;
 export const drivePreviewUrl = (id: string) => `https://drive.google.com/file/d/${id}/preview`;
+
+export const STUDY_BUCKET = "study-files";
+
+/** Signed URL + best in-app preview URL for an uploaded file. */
+export async function uploadedFileUrls(path: string, mime?: string | null) {
+  const { data, error } = await supabase.storage.from(STUDY_BUCKET).createSignedUrl(path, 60 * 60 * 3);
+  if (error || !data) throw error ?? new Error("Could not open file");
+  const url = data.signedUrl;
+  const m = mime ?? "";
+  const native = m.startsWith("image/") || m.startsWith("video/") || m.startsWith("audio/") || m === "application/pdf" || m.startsWith("text/");
+  const preview = native ? url : `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(url)}`;
+  return { url, preview };
+}
+
+export const formatSize = (b?: number | null) => {
+  if (!b) return "";
+  if (b < 1024 * 1024) return `${Math.max(1, Math.round(b / 1024))} KB`;
+  return `${(b / 1024 / 1024).toFixed(1)} MB`;
+};

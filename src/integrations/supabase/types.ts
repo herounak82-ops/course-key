@@ -139,7 +139,10 @@ export type Database = {
           id: string
           is_published: boolean
           kind: string
+          mime_type: string | null
+          parent_id: string | null
           ref: string
+          size_bytes: number | null
           sort_order: number
           title: string
         }
@@ -150,7 +153,10 @@ export type Database = {
           id?: string
           is_published?: boolean
           kind?: string
+          mime_type?: string | null
+          parent_id?: string | null
           ref: string
+          size_bytes?: number | null
           sort_order?: number
           title: string
         }
@@ -161,11 +167,22 @@ export type Database = {
           id?: string
           is_published?: boolean
           kind?: string
+          mime_type?: string | null
+          parent_id?: string | null
           ref?: string
+          size_bytes?: number | null
           sort_order?: number
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "learning_items_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "learning_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notices: {
         Row: {
