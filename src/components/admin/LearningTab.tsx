@@ -12,8 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Pencil, Trash2, Loader2, FolderPlus, Upload, Link2, Folder, FileText, Eye } from "lucide-react";
-import { KINDS, LINK_KINDS, normaliseRef, STUDY_BUCKET, formatSize } from "@/lib/learning";
+import { Pencil, Trash2, Loader2, FolderPlus, Upload, Plus, Folder, FileText, Eye } from "lucide-react";
+import { KINDS, normaliseRef, STUDY_BUCKET, formatSize } from "@/lib/learning";
 import { Breadcrumbs, ViewerDialog, openItem, type Viewer } from "@/components/FreeLearning";
 
 type Crumb = { id: string | null; title: string };
@@ -21,7 +21,6 @@ const ROOT = "__root__";
 
 export function LearningTab() {
   const qc = useQueryClient();
-  const fileRef = useRef<HTMLInputElement>(null);
   const [path, setPath] = useState<Crumb[]>([{ id: null, title: "Library" }]);
   const [editing, setEditing] = useState<any | null>(null);
   const [mode, setMode] = useState<"folder" | "link" | null>(null);
@@ -75,25 +74,21 @@ export function LearningTab() {
       ok++;
     }
     setUploading(null);
-    if (fileRef.current) fileRef.current.value = "";
     if (ok) toast.success(`Uploaded ${ok} file${ok > 1 ? "s" : ""}`);
     refresh();
   };
 
   return (
-    <div className="space-y-3">
-      <div>
-        <h3 className="font-display font-bold">Learning library</h3>
-        <p className="text-xs text-muted-foreground">Create folders, upload files (up to 50 MB each), or add Drive / YouTube / other links. Shown in My Learning.</p>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" onClick={() => { setEditing(null); setMode("folder"); }}><FolderPlus className="h-4 w-4 mr-1" />New folder</Button>
-        <Button size="sm" onClick={() => fileRef.current?.click()} disabled={!!uploading}>
-          {uploading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
-          {uploading ? `Uploading ${uploading.slice(0, 18)}…` : "Upload files"}
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => { setEditing(null); setMode("link"); }}><Link2 className="h-4 w-4 mr-1" />Add link / video</Button>
-        <input ref={fileRef} type="file" multiple hidden onChange={(e) => upload(e.target.files)} />
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <h3 className="font-display text-lg font-bold">Learning library</h3>
+          <p className="text-xs text-muted-foreground">Study materials, videos and folders</p>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <Button size="sm" variant="outline" className="h-10 rounded-lg bg-card" onClick={() => { setEditing(null); setMode("folder"); }}><FolderPlus className="h-4 w-4 mr-1.5" />New folder</Button>
+          <Button size="sm" className="h-10 rounded-lg shadow-card" onClick={() => { setEditing(null); setMode("link"); }} disabled={!!uploading}><Plus className="h-4 w-4 mr-1.5" />Add resource</Button>
+        </div>
       </div>
       <Breadcrumbs path={path} onJump={(i) => setPath(path.slice(0, i + 1))} />
       {isLoading ? <Skeleton className="h-32" /> : !items.length ? (
@@ -128,7 +123,7 @@ export function LearningTab() {
       )}
       <Dialog open={!!mode} onOpenChange={(v) => !v && setMode(null)}>
         {mode && (
-          <ItemDialog key={editing?.id ?? mode} mode={mode} item={editing} parentId={current}
+          <ItemDialog key={editing?.id ?? mode} mode={mode} item={editing} parentId={current} onUpload={upload} uploading={uploading}
             folders={folders.filter((f: any) => f.id !== editing?.id)}
             onClose={() => { setMode(null); refresh(); }} />
         )}
@@ -138,16 +133,19 @@ export function LearningTab() {
   );
 }
 
-function ItemDialog({ mode, item, parentId, folders, onClose }: { mode: "folder" | "link"; item: any | null; parentId: string | null; folders: any[]; onClose: () => void }) {
+function ItemDialog({ mode, item, parentId, folders, onClose, onUpload, uploading }: { mode: "folder" | "link"; item: any | null; parentId: string | null; folders: any[]; onClose: () => void; onUpload: (files: FileList | null) => Promise<void>; uploading: string | null }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [files, setFiles] = useState<FileList | null>(null);
   const isUpload = item?.kind === "upload";
   const [f, setF] = useState({
     title: item?.title ?? "", description: item?.description ?? "",
-    kind: item?.kind ?? (mode === "folder" ? "folder" : "yt_video"), ref: item?.ref ?? "",
+    kind: item?.kind ?? (mode === "folder" ? "folder" : "upload"), ref: item?.ref ?? "",
     sort_order: item?.sort_order ?? 0, is_published: item?.is_published ?? true,
     parent: (item ? item.parent_id : parentId) ?? ROOT,
   });
   const [saving, setSaving] = useState(false);
-  const needsRef = f.kind !== "folder" && !isUpload;
+  const newUpload = !item && f.kind === "upload";
+  const needsRef = f.kind !== "folder" && f.kind !== "upload";
 
   const save = async () => {
     if (f.title.trim().length < 1) return toast.error("Name is required");
@@ -170,25 +168,35 @@ function ItemDialog({ mode, item, parentId, folders, onClose }: { mode: "folder"
   };
 
   return (
-    <DialogContent className="max-h-[90vh] overflow-y-auto">
-      <DialogHeader><DialogTitle>{item ? "Edit" : mode === "folder" ? "New folder" : "Add link / video"}</DialogTitle></DialogHeader>
-      <div className="space-y-3">
-        {needsRef && (
-          <div><Label>Type</Label>
+    <DialogContent className="max-h-[90vh] overflow-y-auto rounded-lg border-border bg-card sm:max-w-lg">
+      <DialogHeader className="border-b border-border pb-4"><DialogTitle className="font-display text-xl">{item ? "Edit resource" : mode === "folder" ? "New folder" : "Add resource"}</DialogTitle></DialogHeader>
+      <div className="space-y-4 py-1">
+        {mode !== "folder" && !isUpload && (
+          <div className="space-y-1.5"><Label>Resource type</Label>
             <Select value={f.kind} onValueChange={(v) => setF({ ...f, kind: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{LINK_KINDS.map((k) => <SelectItem key={k.value} value={k.value}>{k.label}</SelectItem>)}</SelectContent>
+              <SelectContent>{KINDS.filter((k) => k.value !== "folder" && (!item || k.value !== "upload")).map((k) => <SelectItem key={k.value} value={k.value}>{k.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
         )}
-        <div><Label>Name</Label><Input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} autoFocus /></div>
+        {newUpload ? (
+          <div className="space-y-3">
+            <Button type="button" variant="outline" className="h-auto min-h-32 w-full flex-col gap-2 rounded-lg border-dashed bg-secondary/50 py-6 hover:bg-secondary" onClick={() => fileRef.current?.click()} disabled={!!uploading}>
+              <Upload className="h-7 w-7 text-primary" />
+              <span className="font-semibold">Choose files</span>
+              <span className="text-xs font-normal text-muted-foreground">Up to 50 MB per file</span>
+            </Button>
+            <input ref={fileRef} type="file" multiple hidden onChange={(e) => setFiles(e.target.files)} />
+            {files && <ul className="space-y-1 text-sm">{Array.from(files).map((file, index) => <li key={index} className="flex min-w-0 items-center gap-2"><FileText className="h-4 w-4 shrink-0 text-primary" /><span className="truncate">{file.name}</span><span className="shrink-0 text-xs text-muted-foreground">{formatSize(file.size)}</span></li>)}</ul>}
+          </div>
+        ) : <div className="space-y-1.5"><Label>Name</Label><Input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} autoFocus /></div>}
         {needsRef && (
           <div><Label>Link or ID</Label>
             <Input value={f.ref} onChange={(e) => setF({ ...f, ref: e.target.value })} placeholder="Paste the Drive / YouTube / web link" />
             {f.kind === "drive_folder" && <p className="text-[11px] text-muted-foreground mt-1">The folder must be shared with your service account email.</p>}
           </div>
         )}
-        <div><Label>Inside folder</Label>
+        {!newUpload && <><div><Label>Inside folder</Label>
           <Select value={f.parent} onValueChange={(v) => setF({ ...f, parent: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -201,9 +209,9 @@ function ItemDialog({ mode, item, parentId, folders, onClose }: { mode: "folder"
         <div className="flex items-center gap-4">
           <div className="w-24"><Label>Order</Label><Input type="number" value={f.sort_order} onChange={(e) => setF({ ...f, sort_order: e.target.value as any })} /></div>
           <label className="flex items-center gap-2 mt-5 text-sm"><Switch checked={f.is_published} onCheckedChange={(v) => setF({ ...f, is_published: v })} />Visible</label>
-        </div>
+        </div></>}
       </div>
-      <DialogFooter><Button onClick={save} disabled={saving}>{saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Save</Button></DialogFooter>
+      <DialogFooter className="border-t border-border pt-4"><Button variant="outline" onClick={onClose} disabled={saving || !!uploading}>Cancel</Button><Button onClick={newUpload ? async () => { await onUpload(files); setFiles(null); } : save} disabled={saving || !!uploading || (newUpload && !files?.length)}>{(saving || uploading) && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}{newUpload ? uploading ? "Uploading…" : "Upload files" : "Save"}</Button></DialogFooter>
     </DialogContent>
   );
 }
