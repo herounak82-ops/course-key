@@ -24,7 +24,7 @@ export function LearningTab() {
   const [path, setPath] = useState<Crumb[]>([{ id: null, title: "Library" }]);
   const [editing, setEditing] = useState<any | null>(null);
   const [mode, setMode] = useState<"folder" | "link" | null>(null);
-  const [uploading, setUploading] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [viewer, setViewer] = useState<Viewer>(null);
   const current = path[path.length - 1].id;
 
@@ -57,27 +57,6 @@ export function LearningTab() {
     refresh();
   };
 
-  const upload = async (files: FileList | null) => {
-    if (!files?.length) return;
-    let ok = 0;
-    for (const file of Array.from(files)) {
-      setUploading(file.name);
-      const safe = file.name.replace(/[^\w.\-]+/g, "_");
-      const key = `${crypto.randomUUID()}/${safe}`;
-      const { error } = await supabase.storage.from(STUDY_BUCKET).upload(key, file, { contentType: file.type || undefined });
-      if (error) { toast.error(`${file.name}: ${error.message}`); continue; }
-      const { error: e2 } = await supabase.from("learning_items").insert({
-        title: file.name.replace(/\.[^.]+$/, ""), kind: "upload", ref: key, parent_id: current,
-        mime_type: file.type || null, size_bytes: file.size, category: "General",
-      });
-      if (e2) { toast.error(e2.message); await supabase.storage.from(STUDY_BUCKET).remove([key]); continue; }
-      ok++;
-    }
-    setUploading(null);
-    if (ok) toast.success(`Uploaded ${ok} file${ok > 1 ? "s" : ""}`);
-    refresh();
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -87,7 +66,7 @@ export function LearningTab() {
         </div>
         <div className="flex gap-2 shrink-0">
           <Button size="sm" variant="outline" className="h-10 rounded-lg bg-card" onClick={() => { setEditing(null); setMode("folder"); }}><FolderPlus className="h-4 w-4 mr-1.5" />New folder</Button>
-          <Button size="sm" className="h-10 rounded-lg shadow-card" onClick={() => { setEditing(null); setMode("link"); }} disabled={!!uploading}><Plus className="h-4 w-4 mr-1.5" />Add resource</Button>
+          <Button size="sm" className="h-10 rounded-lg shadow-card" onClick={() => { setEditing(null); setMode("link"); }} disabled={uploading}><Plus className="h-4 w-4 mr-1.5" />Add resource</Button>
         </div>
       </div>
       <Breadcrumbs path={path} onJump={(i) => setPath(path.slice(0, i + 1))} />
@@ -123,7 +102,7 @@ export function LearningTab() {
       )}
       <Dialog open={!!mode} onOpenChange={(v) => !v && setMode(null)}>
         {mode && (
-          <ItemDialog key={editing?.id ?? mode} mode={mode} item={editing} parentId={current} onUpload={upload} uploading={uploading}
+          <ItemDialog key={editing?.id ?? mode} mode={mode} item={editing} parentId={current}
             folders={folders.filter((f: any) => f.id !== editing?.id)}
             onClose={() => { setMode(null); refresh(); }} />
         )}
@@ -133,9 +112,9 @@ export function LearningTab() {
   );
 }
 
-function ItemDialog({ mode, item, parentId, folders, onClose, onUpload, uploading }: { mode: "folder" | "link"; item: any | null; parentId: string | null; folders: any[]; onClose: () => void; onUpload: (files: FileList | null) => Promise<void>; uploading: string | null }) {
+function ItemDialog({ mode, item, parentId, folders, onClose }: { mode: "folder" | "link"; item: any | null; parentId: string | null; folders: any[]; onClose: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [files, setFiles] = useState<FileList | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const isUpload = item?.kind === "upload";
   const [f, setF] = useState({
     title: item?.title ?? "", description: item?.description ?? "",
@@ -148,21 +127,44 @@ function ItemDialog({ mode, item, parentId, folders, onClose, onUpload, uploadin
   const needsRef = f.kind !== "folder" && f.kind !== "upload";
 
   const save = async () => {
-    if (f.title.trim().length < 1) return toast.error("Name is required");
+    if (f.title.trim().length < 1 && !newUpload) return toast.error("Name is required");
     if (needsRef && !f.ref.trim()) return toast.error("Link is required");
+    if (newUpload && !file) return toast.error("Choose a file to upload");
     setSaving(true);
+
+    let ref = f.kind === "folder" ? (item?.ref ?? "folder") : isUpload ? item.ref : normaliseRef(f.kind, f.ref);
+    let mime: string | null = item?.mime_type ?? null;
+    let size: number | null = item?.size_bytes ?? null;
+    let title = f.title.trim();
+
+    if (newUpload && file) {
+      const safe = file.name.replace(/[^\w.\-]+/g, "_");
+      const key = `${crypto.randomUUID()}/${safe}`;
+      const { error } = await supabase.storage.from(STUDY_BUCKET).upload(key, file, { contentType: file.type || undefined });
+      if (error) { setSaving(false); return toast.error(error.message); }
+      ref = key;
+      mime = file.type || null;
+      size = file.size;
+      if (!title) title = file.name.replace(/\.[^.]+$/, "");
+    }
+
     const row: any = {
-      title: f.title.trim(), description: f.description || null, kind: f.kind,
-      ref: f.kind === "folder" ? (item?.ref ?? "folder") : isUpload ? item.ref : normaliseRef(f.kind, f.ref),
+      title, description: f.description || null, kind: f.kind, ref,
       sort_order: Number(f.sort_order) || 0, is_published: f.is_published,
       parent_id: f.parent === ROOT ? null : f.parent,
     };
+    if (newUpload) { row.mime_type = mime; row.size_bytes = size; }
     if (!item) row.category = "General";
+
     const { error } = item
       ? await supabase.from("learning_items").update(row).eq("id", item.id)
       : await supabase.from("learning_items").insert(row);
+    if (error) {
+      setSaving(false);
+      if (newUpload) await supabase.storage.from(STUDY_BUCKET).remove([ref]);
+      return toast.error(error.message);
+    }
     setSaving(false);
-    if (error) return toast.error(error.message);
     toast.success("Saved");
     onClose();
   };
@@ -173,30 +175,38 @@ function ItemDialog({ mode, item, parentId, folders, onClose, onUpload, uploadin
       <div className="space-y-4 py-1">
         {mode !== "folder" && !isUpload && (
           <div className="space-y-1.5"><Label>Resource type</Label>
-            <Select value={f.kind} onValueChange={(v) => setF({ ...f, kind: v })}>
+            <Select value={f.kind} onValueChange={(v) => { setF({ ...f, kind: v }); setFile(null); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{KINDS.filter((k) => k.value !== "folder" && (!item || k.value !== "upload")).map((k) => <SelectItem key={k.value} value={k.value}>{k.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
         )}
-        {newUpload ? (
-          <div className="space-y-3">
-            <Button type="button" variant="outline" className="h-auto min-h-32 w-full flex-col gap-2 rounded-lg border-dashed bg-secondary/50 py-6 hover:bg-secondary" onClick={() => fileRef.current?.click()} disabled={!!uploading}>
-              <Upload className="h-7 w-7 text-primary" />
-              <span className="font-semibold">Choose files</span>
-              <span className="text-xs font-normal text-muted-foreground">Up to 50 MB per file</span>
+        {newUpload && (
+          <div className="space-y-2">
+            <Label>File</Label>
+            <Button type="button" variant="outline" className="h-auto w-full flex-col gap-1.5 rounded-lg border-dashed bg-secondary/50 py-5 hover:bg-secondary" onClick={() => fileRef.current?.click()} disabled={saving}>
+              <Upload className="h-6 w-6 text-primary" />
+              <span className="font-semibold text-sm">{file ? "Change file" : "Choose file"}</span>
+              <span className="text-xs font-normal text-muted-foreground">Up to 50 MB</span>
             </Button>
-            <input ref={fileRef} type="file" multiple hidden onChange={(e) => setFiles(e.target.files)} />
-            {files && <ul className="space-y-1 text-sm">{Array.from(files).map((file, index) => <li key={index} className="flex min-w-0 items-center gap-2"><FileText className="h-4 w-4 shrink-0 text-primary" /><span className="truncate">{file.name}</span><span className="shrink-0 text-xs text-muted-foreground">{formatSize(file.size)}</span></li>)}</ul>}
-          </div>
-        ) : <div className="space-y-1.5"><Label>Name</Label><Input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} autoFocus /></div>}
-        {needsRef && (
-          <div><Label>Link or ID</Label>
-            <Input value={f.ref} onChange={(e) => setF({ ...f, ref: e.target.value })} placeholder="Paste the Drive / YouTube / web link" />
-            {f.kind === "drive_folder" && <p className="text-[11px] text-muted-foreground mt-1">The folder must be shared with your service account email.</p>}
+            <input ref={fileRef} type="file" hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+            {file && (
+              <div className="flex min-w-0 items-center gap-2 rounded-lg bg-secondary/50 px-3 py-2 text-sm">
+                <FileText className="h-4 w-4 shrink-0 text-primary" />
+                <span className="truncate">{file.name}</span>
+                <span className="shrink-0 text-xs text-muted-foreground">{formatSize(file.size)}</span>
+              </div>
+            )}
           </div>
         )}
-        {!newUpload && <><div><Label>Inside folder</Label>
+        {needsRef && (
+          <div className="space-y-1.5"><Label>Link or ID</Label>
+            <Input value={f.ref} onChange={(e) => setF({ ...f, ref: e.target.value })} placeholder="Paste the Drive / YouTube / web link" />
+            {f.kind === "drive_folder" && <p className="text-[11px] text-muted-foreground">The folder must be shared with your service account email.</p>}
+          </div>
+        )}
+        <div className="space-y-1.5"><Label>Name{newUpload && " (optional — uses file name)"}</Label><Input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} autoFocus={!newUpload} /></div>
+        <div className="space-y-1.5"><Label>Inside folder</Label>
           <Select value={f.parent} onValueChange={(v) => setF({ ...f, parent: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -205,13 +215,16 @@ function ItemDialog({ mode, item, parentId, folders, onClose, onUpload, uploadin
             </SelectContent>
           </Select>
         </div>
-        <div><Label>Description (optional)</Label><Textarea rows={2} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></div>
+        <div className="space-y-1.5"><Label>Description (optional)</Label><Textarea rows={2} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></div>
         <div className="flex items-center gap-4">
-          <div className="w-24"><Label>Order</Label><Input type="number" value={f.sort_order} onChange={(e) => setF({ ...f, sort_order: e.target.value as any })} /></div>
-          <label className="flex items-center gap-2 mt-5 text-sm"><Switch checked={f.is_published} onCheckedChange={(v) => setF({ ...f, is_published: v })} />Visible</label>
-        </div></>}
+          <div className="w-24 space-y-1.5"><Label>Order</Label><Input type="number" value={f.sort_order} onChange={(e) => setF({ ...f, sort_order: e.target.value as any })} /></div>
+          <label className="flex items-center gap-2 mt-6 text-sm"><Switch checked={f.is_published} onCheckedChange={(v) => setF({ ...f, is_published: v })} />Visible</label>
+        </div>
       </div>
-      <DialogFooter className="border-t border-border pt-4"><Button variant="outline" onClick={onClose} disabled={saving || !!uploading}>Cancel</Button><Button onClick={newUpload ? async () => { await onUpload(files); setFiles(null); } : save} disabled={saving || !!uploading || (newUpload && !files?.length)}>{(saving || uploading) && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}{newUpload ? uploading ? "Uploading…" : "Upload files" : "Save"}</Button></DialogFooter>
+      <DialogFooter className="border-t border-border pt-4">
+        <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+        <Button onClick={save} disabled={saving}>{saving && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}{newUpload ? (saving ? "Uploading…" : "Upload file") : "Save"}</Button>
+      </DialogFooter>
     </DialogContent>
   );
 }
