@@ -204,12 +204,12 @@ function ItemDialog({ mode, item, parentId, folders, onClose, onUpload, uploadin
               {folders.map((fo) => <SelectItem key={fo.id} value={fo.id}>{fo.title}</SelectItem>)}
             </SelectContent>
           </Select>
-        </div></>}
+        </div>
         <div><Label>Description (optional)</Label><Textarea rows={2} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></div>
         <div className="flex items-center gap-4">
           <div className="w-24"><Label>Order</Label><Input type="number" value={f.sort_order} onChange={(e) => setF({ ...f, sort_order: e.target.value as any })} /></div>
           <label className="flex items-center gap-2 mt-5 text-sm"><Switch checked={f.is_published} onCheckedChange={(v) => setF({ ...f, is_published: v })} />Visible</label>
-        </div>
+        </div></>}
       </div>
       <DialogFooter className="border-t border-border pt-4"><Button variant="outline" onClick={onClose} disabled={saving || !!uploading}>Cancel</Button><Button onClick={newUpload ? async () => { await onUpload(files); setFiles(null); } : save} disabled={saving || !!uploading || (newUpload && !files?.length)}>{(saving || uploading) && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}{newUpload ? uploading ? "Uploading…" : "Upload files" : "Save"}</Button></DialogFooter>
     </DialogContent>
