@@ -30,7 +30,7 @@ export default function CourseDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("courses")
-        .select("*")
+        .select("id, title, description, price, category, thumbnail_url, is_published, created_at, updated_at")
         .eq("id", id!)
         .maybeSingle();
       if (error) throw error;

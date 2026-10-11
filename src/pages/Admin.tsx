@@ -140,7 +140,7 @@ function CoursesTab() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-courses"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("courses").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("courses").select("id, title, description, price, category, thumbnail_url, is_published, created_at, updated_at").order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
