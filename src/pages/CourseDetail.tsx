@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FreeLearning } from "@/components/FreeLearning";
 import {
   ArrowLeft,
   IndianRupee,
@@ -121,6 +122,11 @@ export default function CourseDetail() {
             <EnrollSection courseId={course.id} price={Number(course.price)} onEnroll={() => nav(`/courses/${course.id}/checkout`)} />
           )}
         </div>
+
+        <div className="mt-6">
+          <h2 className="font-display font-bold text-lg mb-3">Course material</h2>
+          <FreeLearning courseId={course.id} emptyText="Material for this course will be added soon." />
+        </div>
       </div>
     </AppLayout>
   );
@@ -166,11 +172,21 @@ function EnrollSection({ courseId, price, onEnroll }: { courseId: string; price:
   );
 }
 
-function ActiveSection({ course }: { course: any }) {
+function ActiveSection({ course: base }: { course: any }) {
+  const { data: media, isLoading } = useQuery({
+    queryKey: ["course-media", base.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_course_media", { _id: base.id });
+      if (error) throw error;
+      return data?.[0] ?? null;
+    },
+  });
+  if (isLoading) return <Skeleton className="h-48 w-full" />;
+  const course = { ...base, ...(media ?? {}) };
   if (!course.youtube_video_id && !course.youtube_playlist_id) {
     return (
       <Card><CardContent className="p-5 text-center text-muted-foreground">
-        Course videos will be added soon by your instructor.
+        Course videos will appear here when added. Check the course material below.
       </CardContent></Card>
     );
   }
