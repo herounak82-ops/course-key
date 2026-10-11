@@ -134,6 +134,7 @@ export type Database = {
       learning_items: {
         Row: {
           category: string
+          course_id: string | null
           created_at: string
           description: string | null
           id: string
@@ -148,6 +149,7 @@ export type Database = {
         }
         Insert: {
           category?: string
+          course_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -162,6 +164,7 @@ export type Database = {
         }
         Update: {
           category?: string
+          course_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -176,6 +179,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "learning_items_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "learning_items_parent_id_fkey"
             columns: ["parent_id"]
             isOneToOne: false
@@ -183,6 +193,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      live_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          is_published: boolean
+          scheduled_at: string | null
+          thumbnail_url: string | null
+          title: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          scheduled_at?: string | null
+          thumbnail_url?: string | null
+          title: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          scheduled_at?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          video_id?: string
+        }
+        Relationships: []
       }
       notices: {
         Row: {
@@ -300,17 +340,62 @@ export type Database = {
         }
         Relationships: []
       }
+      yt_cache: {
+        Row: {
+          fetched_at: string
+          key: string
+          payload: Json
+        }
+        Insert: {
+          fetched_at?: string
+          key: string
+          payload: Json
+        }
+        Update: {
+          fetched_at?: string
+          key?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_access_course: { Args: { _course: string }; Returns: boolean }
+      can_read_study_object: { Args: { _name: string }; Returns: boolean }
+      get_course_media: {
+        Args: { _id: string }
+        Returns: {
+          youtube_playlist_id: string
+          youtube_video_id: string
+        }[]
+      }
+      get_learning_ref: { Args: { _id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      list_learning: {
+        Args: { _course?: string }
+        Returns: {
+          course_id: string
+          description: string
+          id: string
+          is_published: boolean
+          kind: string
+          locked: boolean
+          mime_type: string
+          parent_id: string
+          ref: string
+          size_bytes: number
+          sort_order: number
+          title: string
+        }[]
       }
     }
     Enums: {

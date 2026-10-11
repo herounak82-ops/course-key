@@ -15,7 +15,7 @@ export default function Courses() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("courses")
-        .select("*")
+        .select("id, title, description, price, category, thumbnail_url, is_published, created_at, updated_at")
         .eq("is_published", true)
         .order("created_at", { ascending: false });
       if (error) throw error;

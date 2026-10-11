@@ -8,26 +8,26 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { FileText, Folder, ListVideo, PlayCircle, ExternalLink, ChevronDown, ChevronRight, Link2, FileSpreadsheet, Image as ImageIcon, Presentation, Film, Home, Cloud } from "lucide-react";
+import { FileText, Folder, ListVideo, PlayCircle, ExternalLink, ChevronDown, ChevronRight, Link2, FileSpreadsheet, Image as ImageIcon, Presentation, Film, Home, Cloud, Lock } from "lucide-react";
 import { driveFileUrl, drivePreviewUrl, uploadedFileUrls, formatSize } from "@/lib/learning";
 
 export type Viewer = { title: string; src: string; external?: string } | null;
 type Crumb = { id: string | null; title: string };
 
-export function FreeLearning() {
+export function FreeLearning({ courseId = null, emptyText }: { courseId?: string | null; emptyText?: string }) {
   const [viewer, setViewer] = useState<Viewer>(null);
-  const [path, setPath] = useState<Crumb[]>([{ id: null, title: "All material" }]);
+  const [path, setPath] = useState<Crumb[]>([{ id: null, title: courseId ? "Course material" : "All material" }]);
   const { data, isLoading } = useQuery({
-    queryKey: ["learning-items"],
+    queryKey: ["learning-items", courseId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("learning_items").select("*").eq("is_published", true).order("sort_order").order("title");
+      const { data, error } = await supabase.rpc("list_learning", { _course: courseId as any });
       if (error) throw error;
-      return data;
+      return (data ?? []).filter((d: any) => d.is_published);
     },
   });
 
   if (isLoading) return <Skeleton className="h-40 w-full" />;
-  if (!data?.length) return null;
+  if (!data?.length) return emptyText ? <p className="text-sm text-muted-foreground">{emptyText}</p> : null;
 
   const current = path[path.length - 1].id;
   const items = data.filter((d: any) => (d.parent_id ?? null) === current);
@@ -115,6 +115,7 @@ const iconFor = (mime: string) => {
 };
 
 export async function openItem(item: any, onOpen: (v: Viewer) => void) {
+  if (item.locked || !item.ref) { toast.error("Enroll in this course to unlock this material"); return; }
   if (item.kind === "upload") {
     try {
       const { url, preview } = await uploadedFileUrls(item.ref, item.mime_type);
@@ -127,6 +128,21 @@ export async function openItem(item: any, onOpen: (v: Viewer) => void) {
 }
 
 function ItemCard({ item, onOpen }: { item: any; onOpen: (v: Viewer) => void }) {
+  if (item.locked) {
+    return (
+      <button className="text-left" onClick={() => openItem(item, onOpen)}>
+        <Card className="shadow-card opacity-80">
+          <CardContent className="p-3 flex items-center gap-3">
+            <div className="h-11 w-11 rounded-lg bg-muted text-muted-foreground grid place-items-center shrink-0"><Lock className="h-5 w-5" /></div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm truncate">{item.title}</p>
+              <p className="text-xs text-muted-foreground truncate">Locked · enroll to access</p>
+            </div>
+          </CardContent>
+        </Card>
+      </button>
+    );
+  }
   if (item.kind === "yt_video" || item.kind === "yt_playlist") {
     const isList = item.kind === "yt_playlist";
     return (
@@ -179,18 +195,18 @@ function DriveFolderCard({ item, onOpen }: { item: any; onOpen: (v: Viewer) => v
           </div>
           <ChevronDown className={`h-5 w-5 transition-transform ${open ? "rotate-180" : ""}`} />
         </CollapsibleTrigger>
-        <CollapsibleContent><FolderFiles folderId={item.ref} onOpen={onOpen} depth={0} /></CollapsibleContent>
+        <CollapsibleContent><FolderFiles itemId={item.id} onOpen={onOpen} depth={0} /></CollapsibleContent>
       </Card>
     </Collapsible>
   );
 }
 
-function FolderFiles({ folderId, onOpen, depth }: { folderId: string; onOpen: (v: Viewer) => void; depth: number }) {
+function FolderFiles({ itemId, folderId, onOpen, depth }: { itemId: string; folderId?: string; onOpen: (v: Viewer) => void; depth: number }) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["drive-folder", folderId],
+    queryKey: ["drive-folder", itemId, folderId],
     staleTime: 1000 * 60 * 10,
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("drive-list", { body: { folderId } });
+      const { data, error } = await supabase.functions.invoke("drive-list", { body: { itemId, folderId } });
       if (error) throw error;
       return data.files as { id: string; name: string; mimeType: string; webViewLink?: string }[];
     },
@@ -212,7 +228,7 @@ function FolderFiles({ folderId, onOpen, depth }: { folderId: string; onOpen: (v
               <span className="text-sm flex-1 truncate">{f.name}</span>
               {isFolder && <ChevronDown className={`h-4 w-4 transition-transform ${sub === f.id ? "rotate-180" : ""}`} />}
             </button>
-            {isFolder && sub === f.id && depth < 3 && <FolderFiles folderId={f.id} onOpen={onOpen} depth={depth + 1} />}
+            {isFolder && sub === f.id && depth < 3 && <FolderFiles itemId={itemId} folderId={f.id} onOpen={onOpen} depth={depth + 1} />}
           </li>
         );
       })}

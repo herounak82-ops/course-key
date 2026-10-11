@@ -20,7 +20,7 @@ export default function MyLearning() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_access")
-        .select("status, created_at, course:courses(*)")
+        .select("status, created_at, course:courses(id, title, description, price, category, thumbnail_url, is_published, created_at, updated_at)")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;

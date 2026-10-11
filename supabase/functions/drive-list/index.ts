@@ -53,9 +53,32 @@ async function getToken() {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
-    const { folderId } = await req.json();
-    if (typeof folderId !== "string" || !/^[\w-]{10,100}$/.test(folderId)) return json({ error: "Invalid folder" }, 400);
+    const { itemId, folderId: sub } = await req.json();
+    const idRe = /^[\w-]{10,100}$/;
+    if (typeof itemId !== "string" || !/^[0-9a-f-]{36}$/.test(itemId)) return json({ error: "Invalid item" }, 400);
+    if (sub !== undefined && (typeof sub !== "string" || !idRe.test(sub))) return json({ error: "Invalid folder" }, 400);
+    // Resolve the Drive folder server-side with the caller's own permissions (checks purchase)
+    const rpc = await fetch(`${Deno.env.get("SUPABASE_URL")}/rest/v1/rpc/get_learning_ref`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? "", Authorization: req.headers.get("Authorization") ?? "" },
+      body: JSON.stringify({ _id: itemId }),
+    });
+    const root = rpc.ok ? await rpc.json() : null;
+    if (typeof root !== "string" || !idRe.test(root)) return json({ error: "Not allowed" }, 403);
     const token = await getToken();
+    let folderId = root;
+    if (sub && sub !== root) {
+      // Sub-folder must sit inside the allowed root (max 4 levels deep)
+      let cur = sub, ok = false;
+      for (let i = 0; i < 4 && !ok; i++) {
+        const r = await fetch(`https://www.googleapis.com/drive/v3/files/${cur}?fields=parents&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${token}` } });
+        const p = (await r.json()).parents?.[0];
+        if (!p) break;
+        if (p === root) ok = true; else cur = p;
+      }
+      if (!ok) return json({ error: "Not allowed" }, 403);
+      folderId = sub;
+    }
     const q = encodeURIComponent(`'${folderId}' in parents and trashed = false`);
     const fields = encodeURIComponent("files(id,name,mimeType,size,modifiedTime,webViewLink,iconLink,thumbnailLink)");
     const res = await fetch(
