@@ -12,31 +12,43 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Pencil, Trash2, Loader2, FolderPlus, Upload, Plus, Folder, FileText, Eye } from "lucide-react";
+import { Pencil, Trash2, Loader2, FolderPlus, Upload, Plus, Folder, FileText, Eye, BookOpen, ImageIcon } from "lucide-react";
 import { KINDS, normaliseRef, STUDY_BUCKET, formatSize } from "@/lib/learning";
+import { CourseDialog } from "@/pages/Admin";
 import { Breadcrumbs, ViewerDialog, openItem, type Viewer } from "@/components/FreeLearning";
 
-type Crumb = { id: string | null; title: string };
+type Crumb = { id: string | null; title: string; courseId?: string | null };
 const ROOT = "__root__";
 
 export function LearningTab() {
   const qc = useQueryClient();
-  const [path, setPath] = useState<Crumb[]>([{ id: null, title: "Library" }]);
+  const [path, setPath] = useState<Crumb[]>([{ id: null, title: "Content" }]);
   const [editing, setEditing] = useState<any | null>(null);
   const [mode, setMode] = useState<"folder" | "link" | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [courseDlg, setCourseDlg] = useState<{ course: any | null } | null>(null);
   const [viewer, setViewer] = useState<Viewer>(null);
-  const current = path[path.length - 1].id;
+  const top = path[path.length - 1];
+  const current = top.id;
+  const courseId = top.courseId ?? null;
+  const atRoot = path.length === 1;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-learning"],
+    queryKey: ["admin-learning", courseId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("learning_items").select("*").order("sort_order").order("title");
+      const { data, error } = await supabase.rpc("list_learning", { _course: courseId as any });
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+  const { data: courses } = useQuery({
+    queryKey: ["admin-courses"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("courses").select("id, title, description, price, category, thumbnail_url, is_published, created_at, updated_at").order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
-  const refresh = () => { qc.invalidateQueries({ queryKey: ["admin-learning"] }); qc.invalidateQueries({ queryKey: ["learning-items"] }); };
+  const refresh = () => { qc.invalidateQueries({ queryKey: ["admin-learning"] }); qc.invalidateQueries({ queryKey: ["learning-items"] }); qc.invalidateQueries({ queryKey: ["admin-courses"] }); };
   const items = (data ?? []).filter((d: any) => (d.parent_id ?? null) === current)
     .sort((a: any, b: any) => Number(b.kind === "folder") - Number(a.kind === "folder"));
   const folders = (data ?? []).filter((d: any) => d.kind === "folder");
@@ -45,7 +57,7 @@ export function LearningTab() {
     const all = data ?? [];
     const self = all.find((d: any) => d.id === id);
     const kids = all.filter((d: any) => d.parent_id === id).flatMap((k: any) => collectUploads(k.id));
-    return [...(self?.kind === "upload" ? [self.ref] : []), ...kids];
+    return [...(self?.kind === "upload" && self.ref ? [self.ref] : []), ...kids];
   };
 
   const del = async (item: any) => {
@@ -57,19 +69,60 @@ export function LearningTab() {
     refresh();
   };
 
+  const delCourse = async (c: any) => {
+    if (!confirm(`Delete course "${c.title}"? Its material and student access will be removed.`)) return;
+    const { data: mats } = await supabase.rpc("list_learning", { _course: c.id });
+    const paths = (mats ?? []).filter((m: any) => m.kind === "upload" && m.ref).map((m: any) => m.ref);
+    const { error } = await supabase.from("courses").delete().eq("id", c.id);
+    if (error) return toast.error(error.message);
+    if (paths.length) await supabase.storage.from(STUDY_BUCKET).remove(paths);
+    toast.success("Course deleted");
+    refresh();
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <h3 className="font-display text-lg font-bold">Learning library</h3>
-          <p className="text-xs text-muted-foreground">Study materials, videos and folders</p>
+          <h3 className="font-display text-lg font-bold">{courseId ? "Course material" : "Courses & learning"}</h3>
+          <p className="text-xs text-muted-foreground">{courseId ? "Only students who bought this course can open these files" : "Paid courses and free study material"}</p>
         </div>
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-2 shrink-0 flex-wrap">
+          {atRoot && <Button size="sm" variant="outline" className="h-10 rounded-lg bg-card" onClick={() => setCourseDlg({ course: null })}><BookOpen className="h-4 w-4 mr-1.5" />New course</Button>}
           <Button size="sm" variant="outline" className="h-10 rounded-lg bg-card" onClick={() => { setEditing(null); setMode("folder"); }}><FolderPlus className="h-4 w-4 mr-1.5" />New folder</Button>
-          <Button size="sm" className="h-10 rounded-lg shadow-card" onClick={() => { setEditing(null); setMode("link"); }} disabled={uploading}><Plus className="h-4 w-4 mr-1.5" />Add resource</Button>
+          <Button size="sm" className="h-10 rounded-lg shadow-card" onClick={() => { setEditing(null); setMode("link"); }}><Plus className="h-4 w-4 mr-1.5" />Add resource</Button>
         </div>
       </div>
       <Breadcrumbs path={path} onJump={(i) => setPath(path.slice(0, i + 1))} />
+
+      {atRoot && !!courses?.length && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Paid courses</p>
+          {courses.map((c: any) => (
+            <Card key={c.id} className="shadow-card">
+              <CardContent className="p-3 flex items-center gap-3">
+                <button className="flex-1 min-w-0 flex items-center gap-3 text-left" onClick={() => setPath([...path, { id: null, title: c.title, courseId: c.id }])}>
+                  <div className="h-12 w-16 rounded-md bg-secondary overflow-hidden shrink-0">
+                    {c.thumbnail_url ? <img src={c.thumbnail_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full grid place-items-center text-muted-foreground"><ImageIcon className="h-5 w-5" /></div>}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">{c.title}</p>
+                    <div className="flex gap-1.5 mt-0.5 items-center">
+                      <Badge variant="outline" className="text-[10px]">Course</Badge>
+                      <span className="text-[11px] text-muted-foreground">₹{Number(c.price).toLocaleString("en-IN")}</span>
+                      {!c.is_published && <Badge variant="secondary" className="text-[10px]">Draft</Badge>}
+                    </div>
+                  </div>
+                </button>
+                <Button variant="ghost" size="icon" onClick={() => setCourseDlg({ course: c })}><Pencil className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => delCourse(c)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+              </CardContent>
+            </Card>
+          ))}
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-2">Free library</p>
+        </div>
+      )}
+
       {isLoading ? <Skeleton className="h-32" /> : !items.length ? (
         <Card><CardContent className="p-8 text-center text-muted-foreground text-sm">This folder is empty. Add a folder, upload files or add a link.</CardContent></Card>
       ) : (
@@ -78,7 +131,7 @@ export function LearningTab() {
             <Card key={i.id} className="shadow-card">
               <CardContent className="p-3 flex items-center gap-3">
                 <button className="flex-1 min-w-0 flex items-center gap-3 text-left"
-                  onClick={() => i.kind === "folder" ? setPath([...path, { id: i.id, title: i.title }]) : openItem(i, setViewer)}>
+                  onClick={() => i.kind === "folder" ? setPath([...path, { id: i.id, title: i.title, courseId }]) : openItem(i, setViewer)}>
                   <div className={`h-10 w-10 rounded-lg grid place-items-center shrink-0 ${i.kind === "folder" ? "bg-accent/15 text-accent" : "bg-primary/10 text-primary"}`}>
                     {i.kind === "folder" ? <Folder className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
                   </div>
@@ -102,17 +155,21 @@ export function LearningTab() {
       )}
       <Dialog open={!!mode} onOpenChange={(v) => !v && setMode(null)}>
         {mode && (
-          <ItemDialog key={editing?.id ?? mode} mode={mode} item={editing} parentId={current}
+          <ItemDialog key={editing?.id ?? mode} mode={mode} item={editing} parentId={current} courseId={courseId}
+            rootLabel={courseId ? top.title && path.find((p) => p.courseId && !p.id)?.title || "Course" : "Library"}
             folders={folders.filter((f: any) => f.id !== editing?.id)}
             onClose={() => { setMode(null); refresh(); }} />
         )}
+      </Dialog>
+      <Dialog open={!!courseDlg} onOpenChange={(v) => !v && setCourseDlg(null)}>
+        {courseDlg && <CourseDialog key={courseDlg.course?.id ?? "new"} course={courseDlg.course} onClose={() => { setCourseDlg(null); refresh(); }} />}
       </Dialog>
       <ViewerDialog viewer={viewer} onClose={() => setViewer(null)} />
     </div>
   );
 }
 
-function ItemDialog({ mode, item, parentId, folders, onClose }: { mode: "folder" | "link"; item: any | null; parentId: string | null; folders: any[]; onClose: () => void }) {
+function ItemDialog({ mode, item, parentId, courseId, rootLabel, folders, onClose }: { mode: "folder" | "link"; item: any | null; parentId: string | null; courseId: string | null; rootLabel: string; folders: any[]; onClose: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const isUpload = item?.kind === "upload";
@@ -152,6 +209,7 @@ function ItemDialog({ mode, item, parentId, folders, onClose }: { mode: "folder"
       title, description: f.description || null, kind: f.kind, ref,
       sort_order: Number(f.sort_order) || 0, is_published: f.is_published,
       parent_id: f.parent === ROOT ? null : f.parent,
+      course_id: courseId,
     };
     if (newUpload) { row.mime_type = mime; row.size_bytes = size; }
     if (!item) row.category = "General";
@@ -210,7 +268,7 @@ function ItemDialog({ mode, item, parentId, folders, onClose }: { mode: "folder"
           <Select value={f.parent} onValueChange={(v) => setF({ ...f, parent: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value={ROOT}>Library (top level)</SelectItem>
+              <SelectItem value={ROOT}>{rootLabel} (top level)</SelectItem>
               {folders.map((fo) => <SelectItem key={fo.id} value={fo.id}>{fo.title}</SelectItem>)}
             </SelectContent>
           </Select>
