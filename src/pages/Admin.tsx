@@ -14,10 +14,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { LearningTab } from "@/components/admin/LearningTab";
+import { LiveTab } from "@/components/admin/LiveTab";
 import { z } from "zod";
 import {
   CheckCircle2, ClipboardList, BookOpen, Megaphone, Settings as SettingsIcon,
-  GraduationCap, Plus, Trash2, Pencil, Loader2, ImageIcon, Upload,
+  GraduationCap, Radio, Plus, Trash2, Pencil, Loader2, ImageIcon, Upload,
 } from "lucide-react";
 
 const courseSchema = z.object({
@@ -40,7 +41,7 @@ export default function Admin() {
       <section className="bg-hero text-primary-foreground">
         <div className="container px-4 py-7">
           <h1 className="font-display text-2xl md:text-3xl font-extrabold">Admin Dashboard</h1>
-          <p className="opacity-85 text-sm mt-1">Verify payments, manage courses, post notices.</p>
+          <p className="opacity-85 text-sm mt-1">Verify payments, manage courses & material, live classes and notices.</p>
         </div>
       </section>
 
@@ -48,13 +49,13 @@ export default function Admin() {
         <Tabs defaultValue="pending">
           <TabsList className="w-full grid grid-cols-5 h-auto">
             <TabsTrigger value="pending" className="py-2.5"><ClipboardList className="h-4 w-4 mr-1.5 hidden sm:inline" />Pending</TabsTrigger>
-            <TabsTrigger value="courses" className="py-2.5"><BookOpen className="h-4 w-4 mr-1.5 hidden sm:inline" />Courses</TabsTrigger>
-            <TabsTrigger value="learning" className="py-2.5"><GraduationCap className="h-4 w-4 mr-1.5 hidden sm:inline" />Learning</TabsTrigger>
+            <TabsTrigger value="learning" className="py-2.5"><GraduationCap className="h-4 w-4 mr-1.5 hidden sm:inline" />Content</TabsTrigger>
+            <TabsTrigger value="live" className="py-2.5"><Radio className="h-4 w-4 mr-1.5 hidden sm:inline" />Live</TabsTrigger>
             <TabsTrigger value="notices" className="py-2.5"><Megaphone className="h-4 w-4 mr-1.5 hidden sm:inline" />Notices</TabsTrigger>
             <TabsTrigger value="settings" className="py-2.5"><SettingsIcon className="h-4 w-4 mr-1.5 hidden sm:inline" />Settings</TabsTrigger>
           </TabsList>
           <TabsContent value="pending" className="mt-5"><PendingTab /></TabsContent>
-          <TabsContent value="courses" className="mt-5"><CoursesTab /></TabsContent>
+          <TabsContent value="live" className="mt-5"><LiveTab /></TabsContent>
           <TabsContent value="learning" className="mt-5"><LearningTab /></TabsContent>
           <TabsContent value="notices" className="mt-5"><NoticesTab /></TabsContent>
           <TabsContent value="settings" className="mt-5"><SettingsTab /></TabsContent>
@@ -197,7 +198,7 @@ function CoursesTab() {
   );
 }
 
-function CourseDialog({ course, onClose }: { course: any | null; onClose: () => void }) {
+export function CourseDialog({ course, onClose }: { course: any | null; onClose: () => void }) {
   const { user } = useAuth();
   const [form, setForm] = useState({
     title: course?.title ?? "",
@@ -208,6 +209,13 @@ function CourseDialog({ course, onClose }: { course: any | null; onClose: () => 
     youtube_playlist_id: course?.youtube_playlist_id ?? "",
     is_published: course?.is_published ?? true,
   });
+  useEffect(() => {
+    if (!course) return;
+    supabase.rpc("get_course_media", { _id: course.id }).then(({ data }) => {
+      const m = data?.[0];
+      if (m) setForm((f) => ({ ...f, youtube_video_id: m.youtube_video_id ?? "", youtube_playlist_id: m.youtube_playlist_id ?? "" }));
+    });
+  }, [course]);
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(course?.thumbnail_url ?? null);
   const [busy, setBusy] = useState(false);
