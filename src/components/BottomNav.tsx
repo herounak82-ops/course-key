@@ -1,11 +1,11 @@
 import { NavLink } from "react-router-dom";
-import { Home, BookOpen, GraduationCap, User, Shield } from "lucide-react";
+import { Home, Radio, GraduationCap, User, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 const items = [
   { to: "/", label: "Home", icon: Home },
-  { to: "/courses", label: "Courses", icon: BookOpen },
+  { to: "/live", label: "Live", icon: Radio },
   { to: "/my-learning", label: "Learning", icon: GraduationCap },
   { to: "/profile", label: "Profile", icon: User },
 ];

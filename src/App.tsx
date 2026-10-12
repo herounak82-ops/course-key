@@ -15,6 +15,7 @@ import MyLearning from "./pages/MyLearning";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import LivePage from "./pages/Live";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/courses" element={<RequireAuth><Courses /></RequireAuth>} />
             <Route path="/courses/:id" element={<RequireAuth><CourseDetail /></RequireAuth>} />
             <Route path="/courses/:id/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
+            <Route path="/live" element={<RequireAuth><LivePage /></RequireAuth>} />
             <Route path="/my-learning" element={<RequireAuth><MyLearning /></RequireAuth>} />
             <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
             <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />

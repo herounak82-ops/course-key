@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import {
   Menu,
   Home,
-  BookOpen,
+  Radio,
   GraduationCap,
   User,
   Shield,
@@ -23,7 +23,7 @@ import logo from "@/assets/logo.png";
 
 const baseLinks = [
   { to: "/", label: "Home", icon: Home, end: true },
-  { to: "/courses", label: "All Courses", icon: BookOpen },
+  { to: "/live", label: "Live classes", icon: Radio },
   { to: "/my-learning", label: "My Learning", icon: GraduationCap },
   { to: "/profile", label: "Profile", icon: User },
 ];
