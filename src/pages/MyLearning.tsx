@@ -73,7 +73,7 @@ export default function MyLearning() {
         )}
 
         <div>
-          <h2 className="font-display font-bold text-lg mb-3">My courses</h2>
+          <div className="flex items-center justify-between mb-3"><h2 className="font-display font-bold text-lg">My courses</h2><Button asChild size="sm" variant="outline"><Link to="/courses">Browse courses</Link></Button></div>
           {isLoading ? (
             <Skeleton className="h-32 w-full" />
           ) : active.length === 0 ? (
