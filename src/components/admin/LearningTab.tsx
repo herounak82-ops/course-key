@@ -156,7 +156,7 @@ export function LearningTab() {
       <Dialog open={!!mode} onOpenChange={(v) => !v && setMode(null)}>
         {mode && (
           <ItemDialog key={editing?.id ?? mode} mode={mode} item={editing} parentId={current} courseId={courseId}
-            rootLabel={courseId ? top.title && path.find((p) => p.courseId && !p.id)?.title || "Course" : "Library"}
+            rootLabel={courseId ? path[1]?.title ?? "Course" : "Library"}
             folders={folders.filter((f: any) => f.id !== editing?.id)}
             onClose={() => { setMode(null); refresh(); }} />
         )}
