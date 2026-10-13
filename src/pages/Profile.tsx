@@ -84,7 +84,7 @@ export default function Profile() {
         </Button>
 
         <p className="text-center text-xs text-muted-foreground pt-2">
-          Dev Study Point · Coaching by Dayaram (Dev) Sharma
+          Dev Study Point · Coaching by Dev Sharma
         </p>
       </section>
     </AppLayout>

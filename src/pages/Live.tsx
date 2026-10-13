@@ -80,16 +80,16 @@ export default function LivePage() {
                     const start = l.scheduledAt ? new Date(l.scheduledAt).getTime() : null;
                     return (
                       <Card key={l.id} className="shadow-card overflow-hidden">
-                        <CardContent className="p-3 flex gap-3 items-center">
+                        <CardContent className="p-0">
                           <img src={thumbOf(l)} alt={l.title} className="aspect-video w-full object-cover bg-secondary" />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm line-clamp-2">{l.title}</p>
-                            {start && <p className="text-xs text-muted-foreground mt-0.5">{fmtDate(l.scheduledAt)}</p>}
-                            {start && <p className="text-xs font-semibold text-primary mt-0.5 inline-flex items-center gap-1"><Timer className="h-3 w-3" />Starts in {fmtLeft(start - now)}</p>}
+                          <div className="p-4 space-y-3">
+                            <p className="font-display font-bold text-base line-clamp-2">{l.title}</p>
+                            {start !== null && <p className="text-sm text-muted-foreground">{fmtDate(l.scheduledAt)}</p>}
+                            {start !== null && <p className="text-sm font-semibold text-primary inline-flex items-center gap-1.5"><Timer className="h-4 w-4" />{start > now ? `Starts in ${fmtLeft(start - now)}` : "Scheduled start time reached"}</p>}
+                            <Button className="w-full tap-scale gap-2" onClick={() => setWatching(l)}>
+                              <PlayCircle className="h-5 w-5" />Join
+                            </Button>
                           </div>
-                          <Button size="sm" className="shrink-0 tap-scale" disabled={!canJoin} onClick={() => setWatching(l)}>
-                            {canJoin ? "Join" : "Opens 10 min before"}
-                          </Button>
                         </CardContent>
                       </Card>
                     );
@@ -137,10 +137,10 @@ function Player({ live, now }: { live: Live; now: number }) {
     <div className="aspect-video bg-muted relative">
       <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${live.id}?autoplay=1`} title={live.title}
         allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
-      {waiting && (
+      {waiting && start !== null && (
         <div className="absolute inset-x-0 top-0 p-3 flex justify-center pointer-events-none">
           <div className="glass rounded-full px-4 py-1.5 text-sm font-semibold shadow-card inline-flex items-center gap-2 bg-background/90">
-            <Timer className="h-4 w-4 text-primary" /> Live starts in {fmtLeft(start! - now)}
+            <Timer className="h-4 w-4 text-primary" /> Live starts in {fmtLeft(start - now)}
           </div>
         </div>
       )}

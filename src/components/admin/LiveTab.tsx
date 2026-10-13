@@ -117,7 +117,6 @@ function LiveDialog({ item, onClose }: { item: any | null; onClose: () => void }
         <div className="space-y-1.5"><Label>Title</Label><Input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></div>
         <div className="space-y-1.5"><Label>Start time (for upcoming lives)</Label>
           <Input type="datetime-local" value={f.when} onChange={(e) => setF({ ...f, when: e.target.value })} />
-          <p className="text-[11px] text-muted-foreground">Students can enter the waiting room 10 minutes before this time.</p>
         </div>
         <div className="space-y-1.5"><Label>Thumbnail (optional)</Label>
           <div className="flex items-center gap-3">
