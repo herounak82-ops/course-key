@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Radio, CalendarClock, History, PlayCircle, Timer } from "lucide-react";
 
 type Live = { id: string; title: string; thumbnail: string; status: "live" | "upcoming" | "past"; scheduledAt: string | null; startedAt: string | null; endedAt: string | null };
-const EARLY_MS = 10 * 60 * 1000;
 
 function useNow() {
   const [now, setNow] = useState(Date.now());
@@ -76,22 +75,21 @@ export default function LivePage() {
             <div>
               <h2 className="font-display font-bold text-lg mb-3 flex items-center gap-2"><CalendarClock className="h-5 w-5" /> Upcoming</h2>
               {data?.upcoming.length ? (
-                <div className="space-y-3">
+                <div className="grid sm:grid-cols-2 gap-4">
                   {data.upcoming.map((l) => {
                     const start = l.scheduledAt ? new Date(l.scheduledAt).getTime() : null;
-                    const canJoin = !start || start - now <= EARLY_MS;
                     return (
                       <Card key={l.id} className="shadow-card overflow-hidden">
-                        <CardContent className="p-3 flex gap-3 items-center">
-                          <img src={thumbOf(l)} alt="" className="h-16 w-28 rounded-md object-cover shrink-0 bg-secondary" />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm line-clamp-2">{l.title}</p>
-                            {start && <p className="text-xs text-muted-foreground mt-0.5">{fmtDate(l.scheduledAt)}</p>}
-                            {start && <p className="text-xs font-semibold text-primary mt-0.5 inline-flex items-center gap-1"><Timer className="h-3 w-3" />Starts in {fmtLeft(start - now)}</p>}
+                        <CardContent className="p-0">
+                          <img src={thumbOf(l)} alt={l.title} className="aspect-video w-full object-cover bg-secondary" />
+                          <div className="p-4 space-y-3">
+                            <p className="font-display font-bold text-base line-clamp-2">{l.title}</p>
+                            {start !== null && <p className="text-sm text-muted-foreground">{fmtDate(l.scheduledAt)}</p>}
+                            {start !== null && <p className="text-sm font-semibold text-primary inline-flex items-center gap-1.5"><Timer className="h-4 w-4" />{start > now ? `Starts in ${fmtLeft(start - now)}` : "Scheduled start time reached"}</p>}
+                            <Button className="w-full tap-scale gap-2" onClick={() => setWatching(l)}>
+                              <PlayCircle className="h-5 w-5" />Join
+                            </Button>
                           </div>
-                          <Button size="sm" className="shrink-0 tap-scale" disabled={!canJoin} onClick={() => setWatching(l)}>
-                            {canJoin ? "Join" : "Opens 10 min before"}
-                          </Button>
                         </CardContent>
                       </Card>
                     );
@@ -139,10 +137,10 @@ function Player({ live, now }: { live: Live; now: number }) {
     <div className="aspect-video bg-muted relative">
       <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${live.id}?autoplay=1`} title={live.title}
         allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
-      {waiting && (
+      {waiting && start !== null && (
         <div className="absolute inset-x-0 top-0 p-3 flex justify-center pointer-events-none">
           <div className="glass rounded-full px-4 py-1.5 text-sm font-semibold shadow-card inline-flex items-center gap-2 bg-background/90">
-            <Timer className="h-4 w-4 text-primary" /> Live starts in {fmtLeft(start! - now)}
+            <Timer className="h-4 w-4 text-primary" /> Live starts in {fmtLeft(start - now)}
           </div>
         </div>
       )}

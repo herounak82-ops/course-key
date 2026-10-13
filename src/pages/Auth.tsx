@@ -39,7 +39,7 @@ export default function Auth() {
         <div className="flex flex-col items-center mb-6 text-center animate-fade-in">
           <img src={logo} alt="Dev Study Point" className="h-20 w-20 bg-white rounded-2xl p-2 shadow-elevated" />
           <h1 className="mt-3 font-display text-2xl font-extrabold">Dev Study Point</h1>
-          <p className="text-sm opacity-90">Learn with Dayaram (Dev) Sharma</p>
+          <p className="text-sm opacity-90">Learn with Dev Sir</p>
         </div>
         <Card className="border-0 shadow-elevated glass-light animate-scale-in">
           <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>

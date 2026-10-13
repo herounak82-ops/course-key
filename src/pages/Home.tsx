@@ -92,9 +92,9 @@ export default function Home() {
               </Button>
             </div>
             <div className="mt-6 flex items-center gap-3">
-              <img src={teacherPortrait} alt="Dayaram (Dev) Sharma" className="h-12 w-12 rounded-full object-cover ring-2 ring-white/30" />
+              <img src={teacherPortrait} alt="Dev Sharma" className="h-12 w-12 rounded-full object-cover ring-2 ring-white/30" />
               <div className="text-sm">
-                <p className="font-semibold">Dayaram "Dev" Sharma</p>
+                <p className="font-semibold">Dev Sharma</p>
                 <p className="opacity-80 text-xs">Founder · Dev Study Point</p>
               </div>
             </div>
@@ -216,7 +216,7 @@ export default function Home() {
                 A decade of dedicated teaching
               </h3>
               <p className="text-sm md:text-base text-foreground/80 leading-relaxed">
-              <strong>Dev Study Point</strong>, founded by <strong>Dayaram "Dev" Sharma</strong>,
+              <strong>Dev Study Point</strong>, founded by <strong>Dev Sharma</strong>,
                 has helped over 1,000 students master Mathematics, mathematical reasoning,
                 and competitive exam preparation including Banking and Railway. Our centre
                 combines old-school discipline with modern, concept-first teaching — every
@@ -346,7 +346,7 @@ export default function Home() {
           </div>
 
           <div className="border-t border-white/15 mt-6 pt-4 text-center text-[11px] opacity-75">
-            © {new Date().getFullYear()} Dev Study Point · Coaching by Dayaram (Dev) Sharma · All rights reserved.
+            © {new Date().getFullYear()} Dev Study Point · Coaching by Dev Sharma · All rights reserved.
           </div>
         </div>
       </footer>
