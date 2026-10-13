@@ -120,25 +120,9 @@ export function QrPaymentModal({
             <a href={upiLink}>Open UPI App</a>
           </Button>
 
-          <form onSubmit={submit} className="space-y-2 pt-3 border-t">
-            <Label htmlFor="utr-modal" className="text-sm font-semibold">
-              After paying, enter your UTR / Transaction ID
-            </Label>
-            <Input
-              id="utr-modal"
-              value={utr}
-              onChange={(e) => setUtr(e.target.value)}
-              placeholder="e.g. 412345678901"
-              required
-            />
-            <Button type="submit" className="w-full" disabled={busy}>
-              {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Submit for verification
-            </Button>
-            <p className="text-[10px] text-muted-foreground text-center pt-1">
-              Once verified, your course will appear in "My Learning".
-            </p>
-          </form>
+          <div className="pt-3 border-t">
+            <UtrSubmitForm idPrefix="modal" courseId={courseId} onDone={() => { onSubmitted(); onOpenChange(false); }} />
+          </div>
         </div>
       </DialogContent>
     </Dialog>

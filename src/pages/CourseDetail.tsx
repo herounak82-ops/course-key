@@ -139,7 +139,7 @@ function PendingSection() {
         <Clock className="h-10 w-10 mx-auto mb-2 text-warning animate-pulse-glow rounded-full" />
         <h3 className="font-display font-bold text-lg">Awaiting verification</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          We received your payment details. You'll get access as soon as Dev Sir confirms your UPI transaction. Usually within a few hours.
+          We received your payment details. You'll get access as soon as we confirm your UPI transaction. This can take a few hours.
         </p>
       </CardContent>
     </Card>

@@ -107,29 +107,12 @@ export function PaymentBottomSheet({
           </div>
 
           {/* Step 2 — Submit UTR (always visible) */}
-          <form onSubmit={submitUtr} className="w-full space-y-2 pt-3 border-t">
+          <div className="w-full space-y-2 pt-3 border-t">
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold text-center">
-              Step 2 — Submit Transaction ID
+              Step 2 — Submit Payment Details
             </p>
-            <Label htmlFor="utr-sheet" className="text-sm font-medium">
-              UTR / Transaction ID
-            </Label>
-            <Input
-              id="utr-sheet"
-              value={utr}
-              onChange={(e) => setUtr(e.target.value)}
-              placeholder="e.g. 412345678901"
-              autoComplete="off"
-              required
-            />
-            <Button type="submit" className="w-full" disabled={busy}>
-              {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Submit for verification
-            </Button>
-            <p className="text-[10px] text-muted-foreground text-center">
-              Your course will appear in "My Learning" once verified.
-            </p>
-          </form>
+            <UtrSubmitForm idPrefix="sheet" courseId={courseId} onDone={() => { onSubmitted(); onOpenChange(false); }} />
+          </div>
         </div>
       </DrawerContent>
     </Drawer>
