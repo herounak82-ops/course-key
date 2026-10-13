@@ -7,7 +7,7 @@ import { Smartphone, IndianRupee, Loader2, QrCode } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { UtrSubmitForm } from "@/components/UtrSubmitForm";
 
 const utrSchema = z.string().trim().regex(/^[a-zA-Z0-9]{8,30}$/, "Enter a valid UTR / transaction ID");
 
@@ -30,33 +30,7 @@ export function PaymentBottomSheet({
   onShowQrFallback,
   onSubmitted,
 }: Props) {
-  const { user } = useAuth();
-  const [utr, setUtr] = useState("");
-  const [busy, setBusy] = useState(false);
 
-  const submitUtr = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return toast.error("Please log in first");
-    const v = utrSchema.safeParse(utr);
-    if (!v.success) return toast.error(v.error.issues[0].message);
-    setBusy(true);
-    const { error } = await supabase.from("user_access").insert({
-      user_id: user.id,
-      course_id: courseId,
-      transaction_id: v.data,
-      status: "pending",
-    });
-    setBusy(false);
-    if (error) {
-      if (error.code === "23505") toast.error("You've already submitted for this course.");
-      else toast.error(error.message);
-      return;
-    }
-    toast.success("Submitted! You'll be notified once verified.");
-    setUtr("");
-    onSubmitted();
-    onOpenChange(false);
-  };
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -107,29 +81,12 @@ export function PaymentBottomSheet({
           </div>
 
           {/* Step 2 — Submit UTR (always visible) */}
-          <form onSubmit={submitUtr} className="w-full space-y-2 pt-3 border-t">
+          <div className="w-full space-y-2 pt-3 border-t">
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold text-center">
-              Step 2 — Submit Transaction ID
+              Step 2 — Submit Payment Details
             </p>
-            <Label htmlFor="utr-sheet" className="text-sm font-medium">
-              UTR / Transaction ID
-            </Label>
-            <Input
-              id="utr-sheet"
-              value={utr}
-              onChange={(e) => setUtr(e.target.value)}
-              placeholder="e.g. 412345678901"
-              autoComplete="off"
-              required
-            />
-            <Button type="submit" className="w-full" disabled={busy}>
-              {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Submit for verification
-            </Button>
-            <p className="text-[10px] text-muted-foreground text-center">
-              Your course will appear in "My Learning" once verified.
-            </p>
-          </form>
+            <UtrSubmitForm idPrefix="sheet" courseId={courseId} onDone={() => { onSubmitted(); onOpenChange(false); }} />
+          </div>
         </div>
       </DrawerContent>
     </Drawer>

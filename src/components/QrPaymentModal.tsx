@@ -8,7 +8,7 @@ import { Copy, IndianRupee, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { UtrSubmitForm } from "@/components/UtrSubmitForm";
 
 const utrSchema = z.string().trim().regex(/^[a-zA-Z0-9]{8,30}$/, "Enter a valid UTR / transaction ID");
 
@@ -33,10 +33,7 @@ export function QrPaymentModal({
   courseId,
   onSubmitted,
 }: Props) {
-  const { user } = useAuth();
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
-  const [utr, setUtr] = useState("");
-  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -50,29 +47,6 @@ export function QrPaymentModal({
     toast.success(`${label} copied`);
   };
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return toast.error("Please log in first");
-    const v = utrSchema.safeParse(utr);
-    if (!v.success) return toast.error(v.error.issues[0].message);
-    setBusy(true);
-    const { error } = await supabase.from("user_access").insert({
-      user_id: user.id,
-      course_id: courseId,
-      transaction_id: v.data,
-      status: "pending",
-    });
-    setBusy(false);
-    if (error) {
-      if (error.code === "23505") toast.error("You've already submitted for this course.");
-      else toast.error(error.message);
-      return;
-    }
-    toast.success("Submitted! Awaiting verification.");
-    setUtr("");
-    onSubmitted();
-    onOpenChange(false);
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -120,25 +94,9 @@ export function QrPaymentModal({
             <a href={upiLink}>Open UPI App</a>
           </Button>
 
-          <form onSubmit={submit} className="space-y-2 pt-3 border-t">
-            <Label htmlFor="utr-modal" className="text-sm font-semibold">
-              After paying, enter your UTR / Transaction ID
-            </Label>
-            <Input
-              id="utr-modal"
-              value={utr}
-              onChange={(e) => setUtr(e.target.value)}
-              placeholder="e.g. 412345678901"
-              required
-            />
-            <Button type="submit" className="w-full" disabled={busy}>
-              {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Submit for verification
-            </Button>
-            <p className="text-[10px] text-muted-foreground text-center pt-1">
-              Once verified, your course will appear in "My Learning".
-            </p>
-          </form>
+          <div className="pt-3 border-t">
+            <UtrSubmitForm idPrefix="modal" courseId={courseId} onDone={() => { onSubmitted(); onOpenChange(false); }} />
+          </div>
         </div>
       </DialogContent>
     </Dialog>

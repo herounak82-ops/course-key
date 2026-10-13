@@ -285,6 +285,7 @@ export type Database = {
           course_id: string
           created_at: string
           id: string
+          payer_name: string | null
           status: Database["public"]["Enums"]["access_status"]
           transaction_id: string
           user_id: string
@@ -295,6 +296,7 @@ export type Database = {
           course_id: string
           created_at?: string
           id?: string
+          payer_name?: string | null
           status?: Database["public"]["Enums"]["access_status"]
           transaction_id: string
           user_id: string
@@ -305,6 +307,7 @@ export type Database = {
           course_id?: string
           created_at?: string
           id?: string
+          payer_name?: string | null
           status?: Database["public"]["Enums"]["access_status"]
           transaction_id?: string
           user_id?: string

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Loader2, Radio, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Radio, ImageIcon, Wand2 } from "lucide-react";
 import { normaliseRef } from "@/lib/learning";
 
 const toLocalInput = (iso?: string | null) => {
@@ -86,6 +86,19 @@ function LiveDialog({ item, onClose }: { item: any | null; onClose: () => void }
   });
   const [thumb, setThumb] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [fetching, setFetching] = useState(false);
+  const [autoThumb, setAutoThumb] = useState("");
+  const autoFetch = async () => {
+    const videoId = normaliseRef("yt_video", f.link);
+    if (!/^[\w-]{11}$/.test(videoId)) return toast.error("Paste a valid YouTube live link first");
+    setFetching(true);
+    const { data, error } = await supabase.functions.invoke("youtube-video-info", { body: { videoId } });
+    setFetching(false);
+    if (error || data?.error) return toast.error(data?.error ?? "Couldn't fetch details");
+    setF((p) => ({ ...p, title: p.title || data.title, when: data.scheduledAt ? toLocalInput(data.scheduledAt) : p.when }));
+    setAutoThumb(data.thumbnail || "");
+    toast.success(data.scheduledAt ? "Title and start time filled in" : "Title filled in — no scheduled time found");
+  };
 
   const save = async () => {
     const video_id = normaliseRef("yt_video", f.link);
@@ -112,7 +125,13 @@ function LiveDialog({ item, onClose }: { item: any | null; onClose: () => void }
       <DialogHeader className="border-b border-border pb-4"><DialogTitle className="font-display text-xl">{item ? "Edit live" : "Add live"}</DialogTitle></DialogHeader>
       <div className="space-y-4 py-1">
         <div className="space-y-1.5"><Label>YouTube live link</Label>
-          <Input value={f.link} onChange={(e) => setF({ ...f, link: e.target.value })} placeholder="https://youtube.com/live/…  (public or unlisted)" />
+          <div className="flex gap-2">
+            <Input value={f.link} onChange={(e) => setF({ ...f, link: e.target.value })} placeholder="https://youtube.com/live/…  (public or unlisted)" />
+            <Button type="button" variant="outline" className="shrink-0" disabled={fetching} onClick={autoFetch}>
+              {fetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4 mr-1.5" />}{!fetching && "Auto fetch"}
+            </Button>
+          </div>
+          {autoThumb && !thumb && !item?.thumbnail_url && <img src={autoThumb} alt="" className="mt-2 h-20 rounded-md object-cover" />}
         </div>
         <div className="space-y-1.5"><Label>Title</Label><Input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></div>
         <div className="space-y-1.5"><Label>Start time (for upcoming lives)</Label>
