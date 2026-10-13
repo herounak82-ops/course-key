@@ -346,7 +346,7 @@ export default function Home() {
           </div>
 
           <div className="border-t border-white/15 mt-6 pt-4 text-center text-[11px] opacity-75">
-            © {new Date().getFullYear()} Dev Study Point · Coaching by Dayaram (Dev) Sharma · All rights reserved.
+            © {new Date().getFullYear()} Dev Study Point · Coaching by Dev Sharma · All rights reserved.
           </div>
         </div>
       </footer>
