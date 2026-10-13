@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Radio, CalendarClock, History, PlayCircle, Timer } from "lucide-react";
 
 type Live = { id: string; title: string; thumbnail: string; status: "live" | "upcoming" | "past"; scheduledAt: string | null; startedAt: string | null; endedAt: string | null };
-const EARLY_MS = 10 * 60 * 1000;
 
 function useNow() {
   const [now, setNow] = useState(Date.now());
@@ -76,14 +75,13 @@ export default function LivePage() {
             <div>
               <h2 className="font-display font-bold text-lg mb-3 flex items-center gap-2"><CalendarClock className="h-5 w-5" /> Upcoming</h2>
               {data?.upcoming.length ? (
-                <div className="space-y-3">
+                <div className="grid sm:grid-cols-2 gap-4">
                   {data.upcoming.map((l) => {
                     const start = l.scheduledAt ? new Date(l.scheduledAt).getTime() : null;
-                    const canJoin = !start || start - now <= EARLY_MS;
                     return (
                       <Card key={l.id} className="shadow-card overflow-hidden">
                         <CardContent className="p-3 flex gap-3 items-center">
-                          <img src={thumbOf(l)} alt="" className="h-16 w-28 rounded-md object-cover shrink-0 bg-secondary" />
+                          <img src={thumbOf(l)} alt={l.title} className="aspect-video w-full object-cover bg-secondary" />
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-sm line-clamp-2">{l.title}</p>
                             {start && <p className="text-xs text-muted-foreground mt-0.5">{fmtDate(l.scheduledAt)}</p>}
