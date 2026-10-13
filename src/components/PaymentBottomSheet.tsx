@@ -30,7 +30,6 @@ export function PaymentBottomSheet({
   onShowQrFallback,
   onSubmitted,
 }: Props) {
-  const { user } = useAuth();
 
 
   return (

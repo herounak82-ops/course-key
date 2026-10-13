@@ -33,7 +33,6 @@ export function QrPaymentModal({
   courseId,
   onSubmitted,
 }: Props) {
-  const { user } = useAuth();
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
 
   useEffect(() => {
