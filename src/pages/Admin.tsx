@@ -117,6 +117,7 @@ function PendingTab() {
                 {row.profile?.full_name ?? "Student"} · {row.profile?.email}
               </p>
               <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+                {row.payer_name && <Badge variant="outline">Paid by: {row.payer_name}</Badge>}
                 <Badge variant="secondary">UTR: <span className="font-mono ml-1">{row.transaction_id}</span></Badge>
                 <Badge variant="outline">₹{Number(row.course?.price ?? 0).toLocaleString("en-IN")}</Badge>
                 <span className="text-muted-foreground">{new Date(row.created_at).toLocaleString("en-IN")}</span>
