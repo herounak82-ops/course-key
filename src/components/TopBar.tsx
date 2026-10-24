@@ -31,7 +31,7 @@ export const TopBar = () => {
                 Dev Study Point
               </span>
               <span className="text-[9px] md:text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">
-                by Dev Sharma
+                by Dev Panday
               </span>
             </div>
           </Link>

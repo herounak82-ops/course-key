@@ -63,7 +63,7 @@ export const HamburgerDrawer = () => {
             <span className="font-display font-extrabold text-lg leading-tight">
               Dev Study Point
               <span className="block text-[10px] font-medium uppercase tracking-wider opacity-80">
-                by Dev Sharma
+                by Dev Panday
               </span>
             </span>
           </SheetTitle>
