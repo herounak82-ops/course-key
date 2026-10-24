@@ -72,7 +72,7 @@ export default function Home() {
         <div className="absolute inset-0 opacity-25">
           <img src={teacherStudents} alt="" aria-hidden className="w-full h-full object-cover" />
         </div>
-        <div className="relative container px-4 py-10 md:py-20 grid md:grid-cols-2 gap-8 items-center">
+        <div className="relative container px-4 py-10 md:py-20">
           <div className="animate-fade-in">
             <Badge className="bg-accent/90 text-accent-foreground border-0 mb-3 hover-glow">
               <Sparkles className="h-3 w-3 mr-1" /> India's trusted local coaching
@@ -98,9 +98,6 @@ export default function Home() {
                 <p className="opacity-80 text-xs">Founder · Dev Study Point</p>
               </div>
             </div>
-          </div>
-          <div className="hidden md:block animate-scale-in">
-            <img src={teacherBoard} alt="Dev Panday teaching" className="rounded-2xl shadow-elevated object-cover w-full aspect-square hover-lift" />
           </div>
         </div>
       </section>
@@ -207,9 +204,9 @@ export default function Home() {
         </div>
         <Card className="shadow-card overflow-hidden">
           <div className="grid md:grid-cols-2 gap-0">
-            <div className="grid grid-cols-1 gap-1.5 p-1.5">
-              <img src={teacherStudents} alt="Students learning" className="rounded-lg w-full h-40 md:h-44 object-cover hover-lift" />
-              <img src={teacherBoard} alt="Whiteboard classes" className="rounded-lg w-full h-40 md:h-44 object-cover hover-lift" />
+            <div className="grid grid-cols-1 gap-2 p-2 md:p-4">
+              <img src={teacherStudents} alt="Students learning" className="rounded-lg w-full md:w-[92%] md:mx-auto aspect-[16/9] object-contain bg-muted/40 hover-lift" />
+              <img src={teacherBoard} alt="Whiteboard classes" className="rounded-lg w-full md:w-[92%] md:mx-auto aspect-[16/9] object-contain bg-muted/40 hover-lift" />
             </div>
             <CardContent className="p-5 md:p-6 flex flex-col justify-center">
               <h3 className="font-display text-xl font-bold text-primary mb-2">
