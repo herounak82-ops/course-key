@@ -78,7 +78,7 @@ export default function Home() {
               <Sparkles className="h-3 w-3 mr-1" /> India's trusted local coaching
             </Badge>
             <h1 className="font-display text-3xl md:text-5xl font-extrabold leading-tight">
-              Learn smarter with <span className="text-accent">Dev Sharma</span>
+              Learn smarter with <span className="text-accent">Dev Panday</span>
             </h1>
             <p className="mt-3 md:text-lg opacity-90 max-w-xl">
               Mathematics, mathematical reasoning & competitive exam prep (Banking, Railway and more) — taught with the clarity that comes from a decade in the classroom.
@@ -92,15 +92,15 @@ export default function Home() {
               </Button>
             </div>
             <div className="mt-6 flex items-center gap-3">
-              <img src={teacherPortrait} alt="Dev Sharma" className="h-12 w-12 rounded-full object-cover ring-2 ring-white/30" />
+              <img src={teacherPortrait} alt="Dev Panday" className="h-12 w-12 rounded-full object-cover ring-2 ring-white/30" />
               <div className="text-sm">
-                <p className="font-semibold">Dev Sharma</p>
+                <p className="font-semibold">Dev Panday</p>
                 <p className="opacity-80 text-xs">Founder · Dev Study Point</p>
               </div>
             </div>
           </div>
           <div className="hidden md:block animate-scale-in">
-            <img src={teacherBoard} alt="Dev Sharma teaching" className="rounded-2xl shadow-elevated object-cover w-full aspect-square hover-lift" />
+            <img src={teacherBoard} alt="Dev Panday teaching" className="rounded-2xl shadow-elevated object-cover w-full aspect-square hover-lift" />
           </div>
         </div>
       </section>
@@ -216,7 +216,7 @@ export default function Home() {
                 A decade of dedicated teaching
               </h3>
               <p className="text-sm md:text-base text-foreground/80 leading-relaxed">
-              <strong>Dev Study Point</strong>, founded by <strong>Dev Sharma</strong>,
+              <strong>Dev Study Point</strong>, founded by <strong>Dev Panday</strong>,
                 has helped over 1,000 students master Mathematics, mathematical reasoning,
                 and competitive exam preparation including Banking and Railway. Our centre
                 combines old-school discipline with modern, concept-first teaching — every
@@ -299,7 +299,7 @@ export default function Home() {
               <img src={logo} alt="" className="h-12 w-12 bg-white rounded-xl p-1.5" />
               <div>
                 <p className="font-display font-extrabold text-lg leading-none">Dev Study Point</p>
-                <p className="text-[11px] uppercase tracking-wider opacity-80 mt-1">by Dev Sharma</p>
+                <p className="text-[11px] uppercase tracking-wider opacity-80 mt-1">by Dev Panday</p>
                 <p className="text-xs opacity-80 mt-2 max-w-xs">
                   Learn at your own pace with Dev Sir — become our next success story.
                 </p>
@@ -346,7 +346,7 @@ export default function Home() {
           </div>
 
           <div className="border-t border-white/15 mt-6 pt-4 text-center text-[11px] opacity-75">
-            © {new Date().getFullYear()} Dev Study Point · Coaching by Dev Sharma · All rights reserved.
+            © {new Date().getFullYear()} Dev Study Point · Coaching by Dev Panday · All rights reserved.
           </div>
         </div>
       </footer>

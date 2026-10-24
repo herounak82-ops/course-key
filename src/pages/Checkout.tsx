@@ -201,7 +201,7 @@ export default function Checkout() {
                 </Badge>
               )}
               <p className="font-display font-bold text-base line-clamp-2">{course.title}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">By Dev Sharma</p>
+              <p className="text-xs text-muted-foreground mt-0.5">By Dev Panday</p>
             </div>
           </CardContent>
         </Card>
