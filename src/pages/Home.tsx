@@ -205,8 +205,8 @@ export default function Home() {
         <Card className="shadow-card overflow-hidden">
           <div className="grid md:grid-cols-2 gap-0">
             <div className="grid grid-cols-1 gap-2 p-2 md:p-4">
-              <img src={teacherStudents} alt="Students learning" className="rounded-lg w-full md:w-[92%] md:mx-auto aspect-[16/9] object-contain bg-muted/40 hover-lift" />
-              <img src={teacherBoard} alt="Whiteboard classes" className="rounded-lg w-full md:w-[92%] md:mx-auto aspect-[16/9] object-contain bg-muted/40 hover-lift" />
+              <img src={teacherStudents} alt="Students learning" className="rounded-xl w-full md:w-[92%] md:mx-auto aspect-video object-cover object-[72%_center] hover-lift" />
+              <img src={teacherBoard} alt="Whiteboard classes" className="rounded-xl w-full md:w-[92%] md:mx-auto aspect-video object-cover object-[50%_32%] hover-lift" />
             </div>
             <CardContent className="p-5 md:p-6 flex flex-col justify-center">
               <h3 className="font-display text-xl font-bold text-primary mb-2">
